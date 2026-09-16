@@ -270,7 +270,7 @@ async function nextId() {
 // ── STATS (dashboard) ─────────────────────────────────────────
 async function getStats() {
   const db = getClient();
-  const capacity = parseInt(process.env.EVENT_CAPACITY || '150', 10);
+  const capacity = parseInt(process.env.EVENT_CAPACITY || '100', 10);
 
   const [
     { count: totalRegistrations },
