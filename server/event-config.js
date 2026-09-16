@@ -45,8 +45,9 @@ const config = {
   },
 
   // ── BillPlz ───────────────────────────────────────────────────
+  // Collection: EVENTSXMAP (msvtrfvz)
   billplz: {
-    collectionId: process.env.BILLPLZ_COLLECTION_ID || 'MMID2027',
+    collectionId: process.env.BILLPLZ_COLLECTION_ID || 'msvtrfvz',
     sandbox:      process.env.BILLPLZ_SANDBOX === 'true' || process.env.BILLPLZ_SANDBOX === '1',
     baseUrl:      process.env.BILLPLZ_SANDBOX === 'true' || process.env.BILLPLZ_SANDBOX === '1'
       ? 'https://www.billplz-sandbox.com/bills'
