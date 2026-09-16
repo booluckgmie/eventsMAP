@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Payment Successful | MAAD × MAP JSC 2026</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9edf2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            max-width: 540px;
+            width: 100%;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 6px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        .card-header {
+            background: #0f1e36;
+            padding: 28px 24px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.3px;
+        }
+
+        .logo span {
+            color: #e0c068;
+        }
+
+        .badge {
+            display: inline-block;
+            margin-top: 10px;
+            background: rgba(224, 192, 104, 0.2);
+            border: 1px solid rgba(224, 192, 104, 0.4);
+            border-radius: 40px;
+            padding: 4px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #e0c068;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-body {
+            padding: 40px 32px;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: #e8f5e9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+
+        .success-icon svg {
+            width: 48px;
+            height: 48px;
+            color: #2e7d32;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0f1e36;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #5a6874;
+            margin-bottom: 32px;
+            font-size: 16px;
+            border-bottom: 1px solid #eef2f6;
+            padding-bottom: 24px;
+        }
+
+        .info-grid {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 32px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .info-value {
+            font-weight: 700;
+            color: #0f1e36;
+            font-family: monospace;
+            font-size: 15px;
+            background: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            letter-spacing: 0.5px;
+        }
+
+        .qr-wrap {
+            text-align: center;
+            margin: 24px 0;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 20px;
+        }
+
+        .qr-wrap img {
+            border: 2px solid #e0c068;
+            border-radius: 12px;
+            padding: 8px;
+            background: white;
+        }
+
+        .qr-note {
+            font-size: 12px;
+            color: #7a6f60;
+            margin-top: 12px;
+        }
+
+        .alert {
+            background: #fff8eb;
+            border-left: 4px solid #e0c068;
+            padding: 16px 20px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            font-size: 14px;
+            color: #7a6f60;
+        }
+
+        .alert strong {
+            color: #0f1e36;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .btn-primary {
+            flex: 1;
+            background: #c8a84b;
+            color: #0f1e36;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #b8982f;
+        }
+
+        .btn-outline {
+            flex: 1;
+            background: transparent;
+            border: 1.5px solid #cbd5e1;
+            color: #475569;
+            padding: 14px 20px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+
+        .btn-outline:hover {
+            border-color: #c8a84b;
+            color: #c8a84b;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        @media (max-width: 480px) {
+            .card-body {
+                padding: 28px 20px;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+            .info-value {
+                font-size: 12px;
+                word-break: break-all;
+                text-align: right;
+                margin-left: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            <div class="logo">MAAD <span>×</span> MAP</div>
+            <div class="badge">JSC 2026 · Payment Confirmation</div>
+        </div>
+
+        <div class="card-body">
+            <div class="success-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+            </div>
+            <h1>Payment Successful! 🎉</h1>
+            <div class="subtitle">Your registration for JSC 2026 is confirmed.</div>
+
+            <div class="qr-wrap" id="qrWrap" style="display: none;">
+                <img id="qrImage" src="" width="200" height="200" alt="QR Code">
+                <p class="qr-note">
+                    📱 Show this QR code at the registration counter<br>
+                    🖨️ A copy has been sent to your email
+                </p>
+            </div>
+
+            <div class="alert">
+                <strong>📧 What's next?</strong>
+                A confirmation email with your QR code and event details has been sent to your inbox. Please present the QR code at the registration desk on 10–12 July 2026.
+            </div>
+
+            <div class="btn-group">
+                <a href="https://maad.com.my/jsc2026.html" class="btn-outline">📅 View Programme</a>
+            </div>
+
+            <div class="footer">
+                For any assistance, contact us at <a href="mailto:maadmalaysia@gmail.com" style="color:#0f1e36;">maadmalaysia@gmail.com</a>
+            </div>
+				<div>
+		<div class="container">
+        <div class="logo">MAAD <span>×</span> MAP</div>
+        <div class="spinner"></div>
+        <p>Redirecting to JSC 2026 Registration page...</p>
+        <div class="countdown">Please wait <span id="seconds">5</span> seconds</div>
+        <a href="/registrationM.html" class="btn">Click here if not redirected →</a>
+    </div>
+        </div>
+    </div>
+
+    <script>
+        let seconds = 5;
+        const countdownEl = document.getElementById('seconds');
+        const interval = setInterval(() => {
+            seconds--;
+            countdownEl.textContent = seconds;
+            if (seconds <= 0) {
+                clearInterval(interval);
+                window.location.href = '/registrationM.html';
+            }
+        }, 1000);
+
+        // Parse query parameters to display registration info
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const billId = urlParams.get('bill_id');
+            const regId = urlParams.get('registration_id');
+            const regEmail = urlParams.get('email');
+            const regCat = urlParams.get('category');
+            const regAmount = urlParams.get('amount');
+            
+            if (regId) {
+                document.getElementById('regId').innerText = regId;
+            } else if (billId) {
+                document.getElementById('regId').innerHTML = `<span style="font-family: monospace;">${billId}</span><span style="font-size: 11px; margin-left: 8px;">(bill reference)</span>`;
+            } else {
+                document.getElementById('regId').innerText = 'JSC2026-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            }
+
+            if (regEmail) {
+                document.getElementById('regEmail').innerText = decodeURIComponent(regEmail);
+            } else {
+                // Try to get from sessionStorage
+                try {
+                    const regData = sessionStorage.getItem('jsc2026_registration');
+                    if (regData) {
+                        const data = JSON.parse(regData);
+                        if (data.email) document.getElementById('regEmail').innerText = data.email;
+                        if (data.cat) document.getElementById('regCat').innerText = data.cat;
+                        if (data.amount) document.getElementById('regAmount').innerHTML = `<span style="font-weight:800;">RM ${data.amount}</span>`;
+                        if (data.qrCode) {
+                            document.getElementById('qrImage').src = data.qrCode;
+                            document.getElementById('qrWrap').style.display = 'block';
+                        }
+                        // Clear after use
+                        sessionStorage.removeItem('jsc2026_registration');
+                    } else {
+                        document.getElementById('regEmail').innerHTML = 'registered email';
+                        document.getElementById('regCat').innerText = 'MAAD / MAP Member';
+                        document.getElementById('regAmount').innerHTML = 'RM 550';
+                    }
+                } catch(e) {
+                    console.warn("Could not retrieve session data", e);
+                }
+            }
+
+            if (regCat) {
+                document.getElementById('regCat').innerText = decodeURIComponent(regCat);
+            }
+
+            if (regAmount) {
+                document.getElementById('regAmount').innerHTML = `<span style="font-weight:800;">RM ${regAmount}</span>`;
+            }
+
+            // If there's no registration_id in URL, optionally show a note
+            if (!regId && !billId) {
+                const infoDiv = document.getElementById('registrationInfo');
+                const noteRow = document.createElement('div');
+                noteRow.className = 'info-row';
+                noteRow.innerHTML = `<span class="info-label">Status</span><span class="info-value">✅ Payment completed (reference received)</span>`;
+                infoDiv.appendChild(noteRow);
+            }
+        })();
+    </script>
+
+
+
+</body>
+</html>

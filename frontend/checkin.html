@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAAD × MAP — Check-in Kiosk</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<style>
+:root {
+  --bg: #0c1117;
+  --surface: #141920;
+  --surface2: #1c2330;
+  --border: #252f3e;
+  --accent: #e8a020;
+  --accent2: #f5c842;
+  --green: #22c55e;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --text: #f0f4f8;
+  --muted: #64748b;
+  --font: 'Plus Jakarta Sans', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body { background:var(--bg); color:var(--text); font-family:var(--font); min-height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+/* KIOSK FRAME */
+.kiosk-frame {
+  display:flex; flex-direction:column; height:100vh;
+  background: radial-gradient(ellipse at 50% 0%, rgba(232,160,32,0.08) 0%, transparent 60%), var(--bg);
+}
+
+/* HEADER */
+.kiosk-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.brand { display:flex; align-items:center; gap:14px; }
+.brand-logo {
+  width:44px; height:44px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-weight:500; font-size:11px; color:#000; letter-spacing:1px;
+}
+.brand-name { font-size:18px; font-weight:800; letter-spacing:-0.5px; }
+.brand-event { font-size:11px; color:var(--muted); margin-top:2px; }
+
+.header-center {
+  text-align:center;
+}
+.clock { font-family:var(--mono); font-size:28px; font-weight:500; color:var(--text); letter-spacing:2px; }
+.date-display { font-size:11px; color:var(--muted); margin-top:2px; }
+
+.header-right { display:flex; align-items:center; gap:12px; }
+.live-badge {
+  display:flex; align-items:center; gap:6px;
+  background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.25);
+  border-radius:20px; padding:5px 14px; font-size:11px; font-weight:600; color:var(--green);
+}
+.live-dot { width:6px;height:6px;border-radius:50%;background:var(--green); animation:pulse 1.5s infinite; }
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+.stat-pill {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; padding:6px 14px; text-align:center;
+}
+.stat-pill-num { font-family:var(--mono); font-size:18px; font-weight:500; color:var(--accent); }
+.stat-pill-label { font-size:9px; color:var(--muted); letter-spacing:1px; }
+
+/* MAIN BODY */
+.kiosk-body {
+  flex:1; display:flex; gap:0; overflow:hidden;
+}
+
+/* LEFT: SCANNER AREA */
+.scanner-pane {
+  width:520px; flex-shrink:0;
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  background: var(--surface);
+}
+
+.scanner-tabs {
+  display:flex; border-bottom:1px solid var(--border);
+}
+.s-tab {
+  flex:1; padding:14px; text-align:center;
+  cursor:pointer; font-size:12px; font-weight:600;
+  color:var(--muted); border-bottom:2px solid transparent;
+  transition:all 0.15s; letter-spacing:0.5px;
+}
+.s-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+.scanner-content { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px; }
+
+/* QR SCANNER VIEW */
+.qr-frame-outer {
+  position:relative; margin-bottom:28px;
+}
+.qr-frame {
+  width:300px; height:300px;
+  position:relative; border-radius:16px; overflow:hidden;
+  background:var(--surface2);
+  border:2px solid var(--border);
+}
+
+.scan-animation {
+  position:absolute; left:0; right:0; height:3px;
+  background:linear-gradient(90deg, transparent, var(--accent), transparent);
+  box-shadow: 0 0 20px var(--accent), 0 0 40px rgba(232,160,32,0.4);
+  animation: scanLine 2.5s ease-in-out infinite;
+  top:0;
+}
+@keyframes scanLine { 0%,100%{top:10px} 50%{top:285px} }
+
+.corner { position:absolute; width:28px;height:28px; border-style:solid; border-color:var(--accent); border-width:0; }
+.corner.tl{top:10px;left:10px;border-top-width:3px;border-left-width:3px;border-radius:4px 0 0 0}
+.corner.tr{top:10px;right:10px;border-top-width:3px;border-right-width:3px;border-radius:0 4px 0 0}
+.corner.bl{bottom:10px;left:10px;border-bottom-width:3px;border-left-width:3px;border-radius:0 0 0 4px}
+.corner.br{bottom:10px;right:10px;border-bottom-width:3px;border-right-width:3px;border-radius:0 0 4px 0}
+
+.qr-placeholder {
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:12px; opacity:0.2;
+}
+.qr-icon { font-size:80px; }
+.qr-text { font-size:11px; letter-spacing:2px; color:var(--muted); }
+
+.scan-hint {
+  font-size:13px; color:var(--muted); text-align:center; line-height:1.6;
+  margin-bottom:20px;
+}
+.scan-hint strong { color:var(--text); }
+
+/* MANUAL INPUT */
+.manual-pane { width:100%; }
+.big-input {
+  width:100%; background:var(--surface2); border:2px solid var(--border);
+  border-radius:12px; padding:16px 20px; font-family:var(--mono); font-size:18px;
+  color:var(--text); outline:none; text-align:center; letter-spacing:3px;
+  transition:border-color 0.15s; margin-bottom:12px;
+}
+.big-input:focus { border-color:var(--accent); }
+.big-input::placeholder { font-size:14px; letter-spacing:1px; color:var(--muted); }
+
+/* KEYBOARD SHORTCUT STRIP */
+.quick-btns {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%;
+}
+.quick-btn {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; padding:10px; cursor:pointer; font-family:var(--font);
+  font-size:11px; color:var(--muted); text-align:center; transition:all 0.15s;
+}
+.quick-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+.checkin-btn {
+  width:100%; padding:16px; border-radius:12px; border:none;
+  background:linear-gradient(135deg, var(--accent), var(--accent2));
+  color:#000; font-family:var(--font); font-size:15px; font-weight:800;
+  cursor:pointer; letter-spacing:0.5px; transition:all 0.15s;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  margin-top:12px;
+}
+.checkin-btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(232,160,32,0.35); }
+.checkin-btn:active { transform:none; }
+
+/* RIGHT: PARTICIPANT LIST + RESULT */
+.list-pane {
+  flex:1; display:flex; flex-direction:column; overflow:hidden;
+}
+
+/* RESULT AREA */
+.result-area {
+  border-bottom:1px solid var(--border);
+  min-height:200px; display:flex; align-items:center; justify-content:center;
+  background:var(--surface); padding:24px; flex-shrink:0;
+  transition:all 0.3s;
+}
+
+.result-idle {
+  text-align:center; color:var(--muted);
+}
+.result-idle-icon { font-size:40px; margin-bottom:8px; opacity:0.3; }
+.result-idle-text { font-size:13px; }
+
+.result-success, .result-error {
+  width:100%; display:flex; align-items:center; gap:20px;
+  border-radius:12px; padding:20px 24px;
+  animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.result-success { background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25); }
+.result-error { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); }
+@keyframes popIn{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
+
+.result-icon-big { font-size:52px; flex-shrink:0; }
+.result-name { font-size:22px; font-weight:800; margin-bottom:4px; letter-spacing:-0.5px; }
+.result-details { font-size:12px; color:var(--muted); line-height:1.8; }
+.result-time { font-family:var(--mono); font-size:11px; color:var(--accent); margin-top:6px; }
+.result-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; margin-top:6px; }
+.r-badge-paid { background:rgba(34,197,94,0.15); color:var(--green); }
+.r-badge-vip { background:rgba(232,160,32,0.15); color:var(--accent); }
+
+/* SEARCH + LIST */
+.list-search { padding:14px 20px; border-bottom:1px solid var(--border); }
+.list-search-input {
+  width:100%; background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; padding:10px 16px 10px 38px;
+  font-family:var(--font); font-size:12px; color:var(--text);
+  outline:none; transition:border-color 0.15s;
+  position:relative;
+}
+.list-search-input:focus { border-color:var(--accent); }
+.list-search-wrap { position:relative; }
+.list-search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:13px; pointer-events:none; }
+
+.participant-list {
+  flex:1; overflow-y:auto; padding:12px 16px;
+}
+.participant-list::-webkit-scrollbar { width:4px; }
+.participant-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+.p-item {
+  display:flex; align-items:center; gap:12px;
+  padding:10px 12px; border-radius:8px; cursor:pointer;
+  transition:background 0.12s; border:1px solid transparent;
+  margin-bottom:4px;
+}
+.p-item:hover { background:var(--surface2); border-color:var(--border); }
+.p-item.present { border-color:rgba(34,197,94,0.2); background:rgba(34,197,94,0.04); }
+
+.p-avatar {
+  width:36px; height:36px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; color:#fff; font-family:var(--font);
+}
+.p-info { flex:1; min-width:0; }
+.p-name { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.p-meta { font-size:10px; color:var(--muted); margin-top:1px; }
+.p-status { flex-shrink:0; }
+.dot-green { width:8px;height:8px;border-radius:50%;background:var(--green); }
+.dot-gray { width:8px;height:8px;border-radius:50%;background:var(--border); }
+.dot-amber { width:8px;height:8px;border-radius:50%;background:#f59e0b; }
+
+/* FOOTER */
+.kiosk-footer {
+  padding:10px 28px; border-top:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--surface); flex-shrink:0;
+  font-size:10px; color:var(--muted);
+}
+.footer-right { display:flex; gap:16px; }
+.f-stat { display:flex; align-items:center; gap:6px; }
+
+/* OVERLAY RESULT FULL SCREEN (for self-checkin kiosk mode) */
+.overlay-result {
+  position:fixed; inset:0; background:var(--bg);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  z-index:200; display:none;
+  text-align:center;
+  animation:fadeIn 0.3s ease;
+}
+.overlay-result.show { display:flex; }
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.overlay-big-icon { font-size:100px; margin-bottom:24px; }
+.overlay-title { font-size:40px; font-weight:800; letter-spacing:-1px; margin-bottom:10px; }
+.overlay-sub { font-size:18px; color:var(--muted); margin-bottom:8px; }
+.overlay-org { font-size:14px; color:var(--muted); }
+.overlay-time { font-family:var(--mono); font-size:13px; color:var(--accent); margin-top:16px; }
+.overlay-close-hint { font-size:12px; color:var(--muted); margin-top:32px; letter-spacing:1px; }
+.overlay-bar {
+  height:4px; background:var(--border); border-radius:2px;
+  width:200px; margin-top:16px; overflow:hidden;
+}
+.overlay-bar-fill { height:100%; background:var(--accent); border-radius:2px; transition:width linear; }
+
+.overlay-err-bg { background:rgba(239,68,68,0.05); }
+.overlay-success-bg { background:rgba(34,197,94,0.03); }
+
+/* Responsive */
+@media(max-width:900px){
+  .scanner-pane{width:100%;border-right:none;}
+  .list-pane{display:none;}
+  .kiosk-body{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+<div class="kiosk-frame">
+
+  <!-- HEADER -->
+  <div class="kiosk-header">
+    <div class="brand">
+      <div class="brand-logo">M×M</div>
+      <div>
+        <div class="brand-name">MAAD × MAP JSC 2026</div>
+        <div class="brand-event">Kuala Lumpur, Malaysia · July 2026</div>
+      </div>
+    </div>
+    <div class="header-center">
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="date-display" id="date-display"></div>
+    </div>
+    <div class="header-right">
+      <div class="stat-pill">
+        <div class="stat-pill-num" id="hdr-checkedin">97</div>
+        <div class="stat-pill-label">CHECKED IN</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-num" style="color:var(--muted)" id="hdr-remaining">31</div>
+        <div class="stat-pill-label">REMAINING</div>
+      </div>
+      <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="kiosk-body">
+
+    <!-- LEFT: SCANNER PANE -->
+    <div class="scanner-pane">
+      <div class="scanner-tabs">
+        <div class="s-tab active" id="tab-qr" onclick="switchMode('qr')">▣ &nbsp;QR SCAN</div>
+        <div class="s-tab" id="tab-manual" onclick="switchMode('manual')">⌨ &nbsp;MANUAL</div>
+        <div class="s-tab" id="tab-name" onclick="switchMode('name')">🔍 &nbsp;SEARCH</div>
+      </div>
+
+      <!-- QR MODE -->
+      <div class="scanner-content" id="mode-qr">
+        <div class="qr-frame-outer">
+          <div class="qr-frame">
+            <div class="scan-animation" id="scan-line"></div>
+            <div class="corner tl"></div>
+            <div class="corner tr"></div>
+            <div class="corner bl"></div>
+            <div class="corner br"></div>
+            <video id="qr-video" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:14px;display:none;" playsinline muted></video>
+            <canvas id="qr-canvas" style="display:none;"></canvas>
+            <div class="qr-placeholder" id="qr-placeholder">
+              <div class="qr-icon">▣</div>
+              <div class="qr-text">AWAITING QR</div>
+            </div>
+          </div>
+        </div>
+        <div class="scan-hint">Hold your <strong>QR code</strong> from your confirmation email<br>up to the camera to check in instantly</div>
+        <div style="display:flex;gap:10px;width:100%;">
+          <button style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;font-family:var(--font);font-size:12px;" onclick="switchMode('manual')">Enter Code Manually</button>
+          <button class="checkin-btn" style="flex:2;margin-top:0;" id="cam-btn" onclick="toggleCamera()">📷 &nbsp;START CAMERA</button>
+        </div>
+        <div style="margin-top:12px;font-size:10px;color:var(--muted);text-align:center;" id="cam-status">Camera off — tap to activate QR scanner</div>
+      </div>
+
+      <!-- MANUAL MODE -->
+      <div class="scanner-content" id="mode-manual" style="display:none;">
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Enter Registration Code</div>
+          <div style="font-size:12px;color:var(--muted);">Type the code from your email (e.g. NX-001)</div>
+        </div>
+        <div class="manual-pane">
+          <input class="big-input" id="manual-input" placeholder="NX-001" maxlength="10" onkeyup="if(event.key==='Enter')doManualCheckin()">
+          <div class="quick-btns">
+            <div class="quick-btn" onclick="appendCode('NX-')">NX- prefix</div>
+            <div class="quick-btn" onclick="clearCode()">⌫ Clear</div>
+          </div>
+          <button class="checkin-btn" onclick="doManualCheckin()">✓ &nbsp;CHECK IN</button>
+        </div>
+      </div>
+
+      <!-- SEARCH MODE -->
+      <div class="scanner-content" id="mode-name" style="display:none;">
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Search by Name</div>
+          <div style="font-size:12px;color:var(--muted);">Type your full name or IC number</div>
+        </div>
+        <div class="manual-pane">
+          <input class="big-input" id="name-input" placeholder="Ahmad Najmi..." style="letter-spacing:1px;font-size:16px;" oninput="liveSearch(this.value)">
+          <div id="name-results" style="width:100%;margin-top:8px;"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: LIST + RESULT -->
+    <div class="list-pane">
+
+      <!-- RESULT AREA -->
+      <div class="result-area" id="result-area">
+        <div class="result-idle" id="result-idle">
+          <div class="result-idle-icon">⬡</div>
+          <div class="result-idle-text">Awaiting check-in action</div>
+          <div style="font-size:11px;color:var(--border);margin-top:6px;">Scan QR or enter code to begin</div>
+        </div>
+        <div id="result-content" style="width:100%;display:none;"></div>
+      </div>
+
+      <!-- PARTICIPANT LIST -->
+      <div class="list-search">
+        <div class="list-search-wrap">
+          <span class="list-search-icon">⌕</span>
+          <input class="list-search-input" placeholder="Filter participants..." oninput="filterList(this.value)">
+        </div>
+      </div>
+      <div class="participant-list" id="participant-list"></div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="kiosk-footer">
+    <div>MAAD × MAP JSC 2026 Check-in Kiosk &nbsp;·&nbsp; Powered by MAAD JSC 2026 System</div>
+    <div class="footer-right">
+      <div class="f-stat"><div class="dot-green"></div> <span id="f-present">97 present</span></div>
+      <div class="f-stat"><div class="dot-amber"></div> <span id="f-pending">14 pending payment</span></div>
+      <div class="f-stat"><div class="dot-gray"></div> <span id="f-absent">31 not yet arrived</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- FULLSCREEN OVERLAY RESULT -->
+<div class="overlay-result" id="overlay-result">
+  <div class="overlay-big-icon" id="overlay-icon">✅</div>
+  <div class="overlay-title" id="overlay-title">Ahmad Najmi</div>
+  <div class="overlay-sub" id="overlay-sub">PETRONAS · Professional</div>
+  <div class="overlay-org" id="overlay-org">Registration ID: NX-001</div>
+  <div class="overlay-time" id="overlay-time">Check-in time: 09:14 AM</div>
+  <div class="overlay-bar"><div class="overlay-bar-fill" id="overlay-bar" style="width:0%"></div></div>
+  <div class="overlay-close-hint">Auto-closing in <span id="countdown">4</span> seconds...</div>
+</div>
+
+<script>
+// ── API-backed DB ────────────────────────────────────────────
+let DB = [];
+
+async function loadParticipants() {
+  try {
+    const res  = await fetch('/api/participants?adminKey=kiosk');
+    const data = await res.json();
+    DB = (data.data || []).filter(p => p.paid); // kiosk only shows paid
+    renderList(DB);
+    updateCounters();
+  } catch {
+    // fallback demo data if server not running
+    DB = [
+      { id:'NX-001', name:'Ahmad Najmi bin Ariffin', org:'PETRONAS', cat:'Professional', paid:true, checkin:false, ciTime:null, color:'#1a4a8a' },
+      { id:'NX-002', name:'Siti Rahmah binti Yusof',  org:'DOSM',     cat:'Professional', paid:true, checkin:false, ciTime:null, color:'#1a7a4a' },
+    ];
+    renderList(DB); updateCounters();
+  }
+}
+
+async function doCheckinAPI(id) {
+  try {
+    await fetch(`/api/participants/${id}/checkin`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': 'kiosk' },
+      body: JSON.stringify({ mode: currentScanMode }),
+    });
+  } catch { /* local update still applied */ }
+}
+
+loadParticipants();
+
+let checkinCount = DB.filter(p=>p.checkin).length;
+let currentScanMode = 'qr';
+
+// ── CLOCK ───────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-MY',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  document.getElementById('date-display').textContent = now.toLocaleDateString('en-MY',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+updateClock(); setInterval(updateClock, 1000);
+
+// ── PARTICIPANT LIST ─────────────────────────────────────────
+function initials(name) { return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+
+function renderList(data) {
+  const el = document.getElementById('participant-list');
+  el.innerHTML = data.map(p=>`
+    <div class="p-item ${p.checkin?'present':''}" onclick="lookupAndCheckin('${p.id}')">
+      <div class="p-avatar" style="background:${p.color}">${initials(p.name)}</div>
+      <div class="p-info">
+        <div class="p-name">${p.name}</div>
+        <div class="p-meta">${p.id} · ${p.org} · ${p.cat}</div>
+      </div>
+      <div class="p-status">
+        ${p.checkin ? `<div class="dot-green"></div>` : p.paid ? `<div class="dot-gray"></div>` : `<div class="dot-amber"></div>`}
+      </div>
+    </div>`).join('');
+}
+
+renderList(DB);
+
+function filterList(q) {
+  const filtered = DB.filter(p =>
+    p.name.toLowerCase().includes(q.toLowerCase()) ||
+    p.id.toLowerCase().includes(q.toLowerCase()) ||
+    p.org.toLowerCase().includes(q.toLowerCase())
+  );
+  renderList(filtered);
+}
+
+// ── CHECK-IN LOGIC ───────────────────────────────────────────
+function lookupAndCheckin(id) {
+  const p = DB.find(x=>x.id===id);
+  if(!p) { showResult(null, 'ID not found'); return; }
+  if(!p.paid) { showResult(p, 'unpaid'); return; }
+  if(p.checkin) { showResult(p, 'already'); return; }
+  // DO CHECK-IN
+  p.checkin = true;
+  p.ciTime  = new Date().toLocaleTimeString('en-MY', { hour:'2-digit', minute:'2-digit', hour12:true });
+  checkinCount++;
+  updateCounters();
+  renderList(DB);
+  showResult(p, 'success');
+  showOverlay(p);
+  doCheckinAPI(p.id);
+}
+
+function showResult(p, type) {
+  const idle = document.getElementById('result-idle');
+  const content = document.getElementById('result-content');
+  idle.style.display = 'none';
+  content.style.display = 'block';
+
+  if(type === 'success') {
+    content.innerHTML = `
+      <div class="result-success">
+        <div class="result-icon-big">✅</div>
+        <div>
+          <div class="result-name" style="color:var(--green)">${p.name}</div>
+          <div class="result-details">${p.id} &nbsp;·&nbsp; ${p.org} &nbsp;·&nbsp; ${p.cat}</div>
+          <div class="result-time">Checked in at ${p.ciTime}</div>
+          <span class="result-badge r-badge-paid">Payment Confirmed</span>
+          ${p.cat==='VIP'?'<span class="result-badge r-badge-vip" style="margin-left:6px;">⭐ VIP</span>':''}
+        </div>
+      </div>`;
+  } else if(type === 'unpaid') {
+    content.innerHTML = `
+      <div class="result-error">
+        <div class="result-icon-big">⚠️</div>
+        <div>
+          <div class="result-name" style="color:var(--red)">${p.name}</div>
+          <div class="result-details">${p.id} &nbsp;·&nbsp; ${p.org}</div>
+          <div class="result-time" style="color:var(--red)">Payment not confirmed — please see committee</div>
+        </div>
+      </div>`;
+  } else if(type === 'already') {
+    content.innerHTML = `
+      <div class="result-success" style="background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.25)">
+        <div class="result-icon-big">ℹ️</div>
+        <div>
+          <div class="result-name" style="color:var(--blue)">${p.name}</div>
+          <div class="result-details">${p.id} &nbsp;·&nbsp; ${p.org}</div>
+          <div class="result-time" style="color:var(--blue)">Already checked in at ${p.ciTime}</div>
+        </div>
+      </div>`;
+  } else {
+    content.innerHTML = `
+      <div class="result-error">
+        <div class="result-icon-big">❌</div>
+        <div>
+          <div class="result-name" style="color:var(--red)">Not Found</div>
+          <div class="result-details">${type}</div>
+        </div>
+      </div>`;
+  }
+
+  setTimeout(()=>{
+    idle.style.display='block'; content.style.display='none';
+  }, 5000);
+}
+
+function showOverlay(p) {
+  const overlay = document.getElementById('overlay-result');
+  document.getElementById('overlay-icon').textContent = p.cat === 'VIP' ? '⭐' : '✅';
+  document.getElementById('overlay-title').textContent = p.name;
+  document.getElementById('overlay-sub').textContent = p.org + ' · ' + p.cat;
+  document.getElementById('overlay-org').textContent = 'Registration: ' + p.id;
+  document.getElementById('overlay-time').textContent = 'Check-in confirmed at ' + p.ciTime;
+  overlay.className = 'overlay-result show ' + (p.cat==='VIP' ? 'overlay-success-bg' : 'overlay-success-bg');
+  overlay.style.background = p.cat==='VIP' ? 'rgba(232,160,32,0.05)' : 'rgba(34,197,94,0.03)';
+
+  // progress bar countdown
+  let pct = 0;
+  const bar = document.getElementById('overlay-bar');
+  const cd = document.getElementById('countdown');
+  bar.style.width = '0%';
+  const interval = setInterval(()=>{
+    pct += 2.5;
+    bar.style.width = pct + '%';
+    cd.textContent = Math.ceil((100-pct)/25);
+    if(pct >= 100) {
+      clearInterval(interval);
+      overlay.classList.remove('show');
+    }
+  }, 100);
+}
+
+// ── CAMERA QR SCANNER ────────────────────────────────────────
+let cameraStream = null;
+let scanRAF = null;
+let lastScanned = '';
+let lastScannedAt = 0;
+
+async function toggleCamera() {
+  if (cameraStream) { stopCamera(); return; }
+  await startCamera();
+}
+
+async function startCamera() {
+  const btn = document.getElementById('cam-btn');
+  const status = document.getElementById('cam-status');
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    const video = document.getElementById('qr-video');
+    video.srcObject = cameraStream;
+    await video.play();
+    video.style.display = 'block';
+    document.getElementById('qr-placeholder').style.display = 'none';
+    document.getElementById('scan-line').style.display = 'block';
+    btn.textContent = '⏹ STOP CAMERA';
+    btn.style.background = 'linear-gradient(135deg,#ef4444,#dc2626)';
+    status.textContent = 'Scanning — point QR code at camera';
+    scanLoop();
+  } catch(e) {
+    status.textContent = 'Camera error: ' + e.message;
+  }
+}
+
+function stopCamera() {
+  if (cameraStream) { cameraStream.getTracks().forEach(t=>t.stop()); cameraStream = null; }
+  if (scanRAF) { cancelAnimationFrame(scanRAF); scanRAF = null; }
+  const video = document.getElementById('qr-video');
+  video.srcObject = null; video.style.display = 'none';
+  document.getElementById('qr-placeholder').style.display = 'flex';
+  document.getElementById('scan-line').style.display = 'none';
+  const btn = document.getElementById('cam-btn');
+  btn.textContent = '📷 START CAMERA';
+  btn.style.background = '';
+  document.getElementById('cam-status').textContent = 'Camera off — tap to activate QR scanner';
+}
+
+function scanLoop() {
+  const video  = document.getElementById('qr-video');
+  const canvas = document.getElementById('qr-canvas');
+  if (!cameraStream || video.readyState < 2) { scanRAF = requestAnimationFrame(scanLoop); return; }
+  const w = video.videoWidth, h = video.videoHeight;
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, w, h);
+  const img = ctx.getImageData(0, 0, w, h);
+  const code = jsQR(img.data, w, h, { inversionAttempts: 'dontInvert' });
+  if (code) {
+    const now = Date.now();
+    // debounce: same code within 3 s = ignore
+    if (code.data !== lastScanned || now - lastScannedAt > 3000) {
+      lastScanned = code.data; lastScannedAt = now;
+      handleQRPayload(code.data);
+    }
+  }
+  scanRAF = requestAnimationFrame(scanLoop);
+}
+
+function handleQRPayload(raw) {
+  try {
+    const p = JSON.parse(raw);
+    if (p.event !== 'MAADMAP2026') { showResult(null, 'Invalid QR — wrong event'); return; }
+    if (!p.id) { showResult(null, 'Invalid QR — missing ID'); return; }
+    currentScanMode = 'qr';
+    lookupAndCheckin(p.id.toUpperCase());
+  } catch {
+    showResult(null, 'QR decode error — not valid JSON');
+  }
+}
+
+// ── MANUAL CHECK-IN ──────────────────────────────────────────
+function doManualCheckin() {
+  const v = document.getElementById('manual-input').value.trim().toUpperCase();
+  if(!v) return;
+  lookupAndCheckin(v);
+  document.getElementById('manual-input').value = '';
+}
+
+function appendCode(prefix) {
+  const inp = document.getElementById('manual-input');
+  if(!inp.value.startsWith(prefix)) inp.value = prefix;
+  inp.focus();
+}
+
+function clearCode() {
+  document.getElementById('manual-input').value = '';
+  document.getElementById('manual-input').focus();
+}
+
+// ── NAME SEARCH ──────────────────────────────────────────────
+function liveSearch(q) {
+  const container = document.getElementById('name-results');
+  if(!q || q.length < 2) { container.innerHTML=''; return; }
+  const matches = DB.filter(p => p.name.toLowerCase().includes(q.toLowerCase()));
+  container.innerHTML = matches.length ? matches.map(p=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:6px;transition:border-color 0.15s;" 
+         onmouseover="this.style.borderColor='var(--accent)'" 
+         onmouseout="this.style.borderColor='var(--border)'"
+         onclick="lookupAndCheckin('${p.id}');document.getElementById('name-input').value='';">
+      <div style="width:34px;height:34px;border-radius:50%;background:${p.color};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;">${initials(p.name)}</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;">${p.name}</div>
+        <div style="font-size:10px;color:var(--muted);">${p.id} · ${p.org}</div>
+      </div>
+      <div style="font-size:10px;padding:3px 8px;border-radius:20px;background:${p.checkin?'rgba(34,197,94,0.1)':p.paid?'rgba(255,255,255,0.05)':'rgba(234,179,8,0.1)'};color:${p.checkin?'var(--green)':p.paid?'var(--muted)':'#f59e0b'};">${p.checkin?'Present':p.paid?'Tap to check in':'Unpaid'}</div>
+    </div>`).join('') :
+    `<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">No match for "${q}"</div>`;
+}
+
+// ── MODE SWITCH ──────────────────────────────────────────────
+function switchMode(mode) {
+  if (mode !== 'qr' && cameraStream) stopCamera();
+  currentScanMode = mode;
+  ['qr','manual','name'].forEach(m=>{
+    document.getElementById('mode-'+m).style.display = m===mode ? 'flex' : 'none';
+    document.getElementById('tab-'+m).classList.toggle('active', m===mode);
+  });
+  if(mode==='manual') setTimeout(()=>document.getElementById('manual-input').focus(), 100);
+  if(mode==='name') setTimeout(()=>document.getElementById('name-input').focus(), 100);
+}
+
+// ── COUNTERS ─────────────────────────────────────────────────
+function updateCounters() {
+  const remaining = DB.filter(p=>p.paid&&!p.checkin).length;
+  document.getElementById('hdr-checkedin').textContent = checkinCount;
+  document.getElementById('hdr-remaining').textContent = remaining;
+  document.getElementById('f-present').textContent = checkinCount + ' present';
+  document.getElementById('f-absent').textContent = remaining + ' not yet arrived';
+}
+</script>
+</body>
+</html>

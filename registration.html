@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MAAD × MAP JSC 2026 — Registration</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f4f4f6;font-family:'Helvetica Neue',Arial,sans-serif;color:#1a1612;min-height:100vh}
+a{color:#c8a84b;cursor:pointer}
+.hdr{background:#0f1e36;padding:28px 24px;text-align:center}
+.hdr-logo{font-size:26px;font-weight:700;color:#fff;letter-spacing:-0.5px}
+.hdr-logo span{color:#e0c068}
+.hdr-tag{display:inline-block;margin-top:8px;background:rgba(200,168,75,.2);border:1px solid rgba(200,168,75,.35);border-radius:20px;padding:4px 18px;font-size:11px;font-weight:600;color:#e0c068;letter-spacing:1.5px;text-transform:uppercase}
+.hdr-sub{color:rgba(255,255,255,.45);font-size:12px;margin-top:8px}
+.page{max-width:680px;margin:32px auto;padding:0 16px 60px}
+.card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.07);margin-bottom:20px}
+.card-hdr{background:#0f1e36;padding:14px 24px;font-size:11px;font-weight:700;color:#e0c068;letter-spacing:1.5px;text-transform:uppercase}
+.card-body{padding:24px}
+.row{display:grid;gap:16px;margin-bottom:16px}
+.row-2{grid-template-columns:1fr 1fr}
+.row-3{grid-template-columns:120px 1fr 1fr}
+@media(max-width:540px){.row-2,.row-3{grid-template-columns:1fr}}
+.field label{display:block;font-size:11px;font-weight:600;color:#7a6f60;letter-spacing:.8px;text-transform:uppercase;margin-bottom:5px}
+.req{color:#c0392b}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid #e4ddd0;border-radius:7px;font-size:14px;color:#1a1612;background:#fff;outline:none;transition:border-color .2s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#c8a84b}
+.field textarea{resize:vertical;min-height:70px}
+.hint{font-size:11px;color:#9a8f7f;margin-top:4px}
+
+/* Membership */
+.member-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.member-opt{border:1.5px solid #e4ddd0;border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;text-align:center;position:relative}
+.member-opt input[type=radio]{position:absolute;opacity:0;width:0;height:0}
+.member-opt:hover{border-color:#c8a84b;background:#fffbf0}
+.member-opt.selected{border-color:#c8a84b;background:#fffbf0}
+.member-name{font-size:14px;font-weight:700;color:#1a1612}
+.member-desc{font-size:10px;color:#9a8f7f;margin-top:4px}
+.member-badge{display:inline-block;background:#0f1e36;color:#e0c068;font-size:9px;padding:2px 8px;border-radius:12px;margin-top:6px}
+
+/* Category section divider */
+.cat-section-label{
+  font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:#9a8f7f;padding:10px 0 6px;border-bottom:1px solid #f0ebe3;margin-bottom:10px
+}
+
+/* Category grid */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.cat-grid{grid-template-columns:1fr}}
+.cat-opt{border:1.5px solid #e4ddd0;border-radius:8px;padding:12px 14px;cursor:pointer;
+  transition:border-color .2s,background .2s;position:relative;user-select:none}
+.cat-opt input[type=radio]{position:absolute;opacity:0;width:0;height:0}
+.cat-opt:hover{border-color:#c8a84b}
+.cat-opt.selected{border-color:#c8a84b;background:#fffbf0}
+.cat-name{font-size:13px;font-weight:600;color:#1a1612}
+.cat-desc{font-size:11px;color:#7a6f60;margin-top:2px}
+.cat-fee{font-size:16px;font-weight:700;color:#0f1e36;margin-top:6px}
+.cat-fee.free{color:#1a5c35}
+
+/* Workshop wrap */
+#workshop-wrap{display:none;margin-top:20px;padding:18px;background:#f9f7f4;border-radius:10px;border:1px solid #e4ddd0}
+.ws-counter{display:flex;align-items:center;gap:12px;margin-bottom:14px;font-size:13px;color:#3d3528}
+.ws-counter strong{color:#0f1e36;font-size:15px}
+.ws-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0ebe3}
+.ws-item:last-child{border-bottom:none}
+.ws-item input[type=checkbox]{width:18px;height:18px;accent-color:#c8a84b;cursor:pointer;flex-shrink:0}
+.ws-item label{font-size:13px;color:#1a1612;cursor:pointer;flex:1}
+.ws-item .ws-fee-tag{font-size:11px;font-weight:600;color:#c8a84b;white-space:nowrap}
+.ws-error{font-size:11px;color:#c0392b;display:none;margin-top:8px}
+
+/* Fee summary box */
+.fee-box{
+  background:#0f1e36;border-radius:10px;padding:18px 22px;
+  margin-bottom:20px;display:none
+}
+.fee-box-inner{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.fee-lbl{font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.fee-breakdown{font-size:11px;color:rgba(255,255,255,.35);line-height:1.7;margin-top:4px}
+.fee-val{font-size:28px;font-weight:700;color:#e0c068;white-space:nowrap}
+.fee-val.free{color:#4caf87}
+.fee-note{font-size:11px;color:rgba(255,255,255,.3);margin-top:3px}
+
+/* Group size field */
+#group-size-wrap{display:none;margin-top:16px}
+
+/* Consent */
+.consent-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #f0ebe3}
+.consent-row:last-child{border:none;padding-bottom:0}
+.consent-row input[type=checkbox]{width:18px;height:18px;margin-top:2px;flex-shrink:0;accent-color:#c8a84b;cursor:pointer}
+.consent-row label{font-size:13px;color:#3d3528;line-height:1.65;cursor:pointer}
+.btn-submit{width:100%;background:#c8a84b;color:#0f1e36;border:none;border-radius:9px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;transition:background .2s}
+.btn-submit:hover:not(:disabled){background:#b8982f}
+.btn-submit:disabled{background:#d0c8b0;cursor:not-allowed}
+.alert{border-radius:8px;padding:14px 18px;font-size:13px;margin-bottom:16px;display:none;line-height:1.6}
+.alert.err{background:#fdf3f3;border:1px solid rgba(192,57,43,.2);color:#922b21}
+.alert ul{padding-left:18px;margin-top:6px}
+.alert.success{background:#e8f5e9;border:1px solid #4caf50;color:#2e7d32;display:block}
+#success{display:none}
+.s-body{text-align:center;padding:40px 24px}
+.s-icon{font-size:52px;margin-bottom:16px}
+.s-id{font-size:36px;font-weight:700;color:#e0c068;letter-spacing:5px;font-family:monospace;background:#0f1e36;border-radius:10px;padding:14px 24px;display:inline-block;margin:16px 0}
+.s-body h2{font-size:22px;color:#0f1e36;margin-bottom:10px}
+.s-body p{font-size:13px;color:#7a6f60;line-height:1.7;max-width:420px;margin:0 auto}
+
+/* ── Modal Styles (Mobile-First) ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:10000;display:none;justify-content:center;align-items:flex-end;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.modal-overlay.active{display:flex}
+.modal-content{background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:92dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideUp .32s cubic-bezier(.22,1,.36,1);padding-bottom:env(safe-area-inset-bottom,0px)}
+@keyframes slideUp{from{transform:translateY(100px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes slideIn{from{transform:translateY(-40px) scale(.97);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+.modal-header{position:sticky;top:0;z-index:1;padding:18px 20px;background:#0f1e36;color:#fff;display:flex;justify-content:space-between;align-items:center;border-radius:20px 20px 0 0;gap:12px}
+.modal-header h3{color:#e0c068;font-size:16px;margin:0;line-height:1.3;flex:1;min-width:0}
+.modal-close{flex-shrink:0;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:22px;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s;touch-action:manipulation}
+.modal-close:hover{background:rgba(255,255,255,.25)}
+.modal-body{padding:20px;line-height:1.65;color:#333;text-align:center}
+.modal-body h4{text-align:left;margin:16px 0 8px;color:#0f1e36;font-size:13px}
+.modal-body p{margin-bottom:12px;font-size:13px;text-align:left}
+.modal-footer{padding:0 20px 20px;display:flex;gap:10px}
+.modal-icon{font-size:52px;margin-bottom:14px;line-height:1}
+.renewal-box{background:#fff8e7;border-left:4px solid #c8a84b;padding:14px 16px;margin:16px 0;border-radius:8px;text-align:left;font-size:13px}
+.renewal-box strong{color:#0f1e36}
+.renewal-links{display:flex;gap:10px;justify-content:center;margin:16px 0;flex-wrap:wrap}
+.renewal-btn{flex:1;min-width:120px;padding:12px 16px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;text-align:center;min-height:44px;display:flex;align-items:center;justify-content:center;transition:all .25s;flex-direction:column;gap:2px}
+.renewal-btn.maad{background:#0f1e36;color:#e0c068;border:1px solid #e0c068}
+.renewal-btn.maad:hover{background:#1a2f4e}
+.renewal-btn.map{background:#c8a84b;color:#0f1e36;border:1px solid #c8a84b}
+.renewal-btn.map:hover{background:#b8982f}
+.btn-group{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+.btn-primary,.btn-secondary{flex:1;min-width:120px;min-height:44px;padding:12px 16px;border-radius:8px;font-weight:700;font-size:14px;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;border:none;cursor:pointer;transition:background .25s,transform .15s;-webkit-tap-highlight-color:transparent}
+.btn-primary{background:#c8a84b;color:#0f1e36}
+.btn-primary:hover{background:#b8982f}
+.btn-primary:active{transform:scale(.97)}
+.btn-secondary{background:#f0f0f0;color:#555}
+.btn-secondary:hover{background:#e0e0e0}
+.btn-secondary:active{transform:scale(.97)}
+.terms-link{color:#c8a84b;text-decoration:underline;cursor:pointer}
+.center{text-align:center}
+.mb-20{margin-bottom:20px}
+@media(max-width:379px){.modal-header h3{font-size:14px}.modal-body{padding:16px}.modal-icon{font-size:44px}.renewal-links,.btn-group{flex-direction:column}.renewal-btn,.btn-primary,.btn-secondary{min-width:100%}}
+@media(min-width:600px){.modal-overlay{align-items:center;padding:24px 16px}.modal-content{border-radius:16px;max-width:500px;width:90%;max-height:88dvh;animation:slideIn .3s cubic-bezier(.22,1,.36,1)}.modal-header{border-radius:16px 16px 0 0;padding:20px 24px}.modal-header h3{font-size:18px}.modal-body{padding:24px}.modal-icon{font-size:60px}}
+@media(min-width:1024px){.modal-content{max-width:520px}}
+@media(max-height:500px) and (orientation:landscape){.modal-overlay{align-items:flex-start;padding-top:8px}.modal-content{max-height:96dvh;border-radius:12px}.modal-icon{font-size:32px;margin-bottom:8px}.modal-body{padding:12px 20px}}
+/* ── Registration Closed Overlay ── */
+.closed-overlay{position:fixed;inset:0;background:#0f1e36;z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px}
+.closed-card{background:#fff;border-radius:20px;max-width:440px;width:100%;padding:40px 32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.closed-icon{font-size:56px;margin-bottom:20px}
+.closed-card h2{font-size:22px;color:#0f1e36;margin-bottom:12px;font-weight:700}
+.closed-card p{font-size:14px;color:#7a6f60;line-height:1.7;margin-bottom:24px}
+.closed-card .closed-contact{background:#f9f7f4;border-radius:10px;padding:16px;font-size:13px;color:#3d3528;text-align:left;margin-bottom:24px}
+.closed-card .closed-contact strong{color:#0f1e36;display:block;margin-bottom:6px;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.closed-card .closed-btn{display:inline-block;background:#0f1e36;color:#e0c068;border:1px solid #e0c068;border-radius:8px;padding:12px 28px;font-weight:700;font-size:14px;text-decoration:none;transition:background .2s}
+.closed-card .closed-btn:hover{background:#1a2f4e}
+body.reg-closed{overflow:hidden}
+body.reg-closed .page{filter:blur(4px);pointer-events:none;user-select:none}
+</style>
+</head>
+<body>
+
+<!-- Registration Closed Overlay -->
+<div class="closed-overlay" id="closedOverlay">
+  <div class="closed-card">
+    <div class="closed-icon">🔒</div>
+    <h2>Registration Closed</h2>
+    <p>
+      Online registration for <strong>MAAD × MAP Joint Scientific Conference 2026</strong>
+      is now closed. We are no longer accepting new submissions through this form.
+    </p>
+    <div class="closed-contact">
+      <strong>Need help or have a query?</strong>
+      Email us at <a href="mailto:maadkl@yahoo.com" style="color:#c8a84b;font-weight:600">maadkl@yahoo.com</a>
+      and our secretariat will assist you.
+    </div>
+    <a href="mailto:maadkl@yahoo.com" class="closed-btn">Contact Secretariat</a>
+  </div>
+</div>
+
+<script>
+  document.body.classList.add('reg-closed');
+  // Prevent any interaction with the form behind the overlay
+  document.addEventListener('keydown', function(e){
+    if (document.getElementById('closedOverlay')) e.stopPropagation();
+  }, true);
+</script>
+
+
+<div class="hdr">
+  <div class="hdr-logo">MAAD <span>×</span> MAP</div>
+  <div class="hdr-tag">JSC 2026</div>
+  <div class="hdr-sub">Joint Scientific Conference 2026 &nbsp;·&nbsp; 10–12 July 2026 &nbsp;·&nbsp; Kuala Lumpur, Malaysia</div>
+</div>
+
+<div class="page">
+
+  <div class="alert err" id="alert-err"></div>
+  <div class="alert success" id="alert-success" style="display:none"></div>
+
+  <form id="reg-form">
+
+    <!-- Personal -->
+    <div class="card">
+      <div class="card-hdr">Personal Details</div>
+      <div class="card-body">
+        <div class="row row-3">
+          <div class="field">
+            <label>Title</label>
+            <select name="titlePrefix">
+              <option value="">—</option>
+              <option>Dr</option><option>Prof</option><option>Assoc Prof</option>
+              <option>Mr</option><option>Ms</option><option>Mrs</option>
+              <option>Dato'</option><option>Datin</option><option>Datuk</option>
+            </select>
+          </div>
+          <div class="field" style="grid-column:span 2">
+            <label>Full Name (as per IC / Passport) <span class="req">*</span></label>
+            <input type="text" name="name" placeholder="e.g. Ahmad Najmi" required>
+          </div>
+        </div>
+        <div class="row row-2">
+          <div class="field">
+            <label>Gender</label>
+            <select name="gender">
+              <option value="">— Select —</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+        </div>
+        <div class="row row-2">
+          <div class="field">
+            <label>IC Number <span class="hint" style="text-transform:none;letter-spacing:0">(Malaysian)</span></label>
+            <input type="text" name="ic" placeholder="880101-01-1234">
+          </div>
+          <div class="field">
+            <label>Passport No <span class="hint" style="text-transform:none;letter-spacing:0">(International)</span></label>
+            <input type="text" name="passport" placeholder="A12345678">
+          </div>
+        </div>
+        <p class="hint">Provide IC <strong>or</strong> Passport — at least one is required.</p>
+      </div>
+    </div>
+
+    <!-- Membership -->
+    <div class="card">
+      <div class="card-hdr">Membership Status <span class="req">*</span></div>
+      <div class="card-body">
+        <div class="member-type-grid">
+          <label class="member-opt" data-member="MAAD">
+            <input type="radio" name="memberType" value="MAAD">
+            <div class="member-name">MAAD Member</div>
+            <div class="member-desc">Malaysian Association of Aesthetic Dentistry</div>
+            <div class="member-badge">Active Member</div>
+          </label>
+          <label class="member-opt" data-member="MAP">
+            <input type="radio" name="memberType" value="MAP">
+            <div class="member-name">MAP Member</div>
+            <div class="member-desc">Malaysian Association of Prosthodontics</div>
+            <div class="member-badge">Active Member</div>
+          </label>
+          <label class="member-opt" data-member="BOTH">
+            <input type="radio" name="memberType" value="BOTH">
+            <div class="member-name">Both MAAD &amp; MAP</div>
+            <div class="member-desc">Member of both associations</div>
+            <div class="member-badge">Dual Member</div>
+          </label>
+          <label class="member-opt" data-member="NON_MEMBER">
+            <input type="radio" name="memberType" value="NON_MEMBER">
+            <div class="member-name">Non-Member</div>
+            <div class="member-desc">Not a member of either association</div>
+            <div class="member-badge">Standard Rate</div>
+          </label>
+        </div>
+        <p class="hint" style="margin-top:12px">Select your membership status to determine your registration fee.</p>
+      </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="card" id="contact-card">
+      <div class="card-hdr">Contact Information</div>
+      <div class="card-body">
+        <div class="row row-2">
+          <div class="field">
+            <label>Email Address <span class="req">*</span></label>
+            <input type="email" name="email" placeholder="you@example.com" required>
+          </div>
+          <div class="field">
+            <label>Mobile Number <span class="req">*</span></label>
+            <input type="tel" name="phone" placeholder="012-3456789" required>
+          </div>
+        </div>
+        <div class="row row-2">
+          <div class="field">
+            <label>Office / Direct Line</label>
+            <input type="tel" name="officePhone" placeholder="03-12345678">
+          </div>
+          <div class="field">
+            <label>Organisation / Hospital / University</label>
+            <input type="text" name="org" placeholder="e.g. Hospital Kuala Lumpur">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance Category -->
+    <div class="card">
+      <div class="card-hdr">Attendance Category <span class="req" style="font-weight:400">*</span></div>
+      <div class="card-body">
+
+        <!-- Conference Only -->
+        <div class="cat-section-label">Conference Only</div>
+        <div class="cat-grid" style="margin-bottom:16px">
+          <label class="cat-opt" data-cat="Member" data-fee="550" data-ws="0">
+            <input type="radio" name="cat" value="Member">
+            <div class="cat-name">Member Rate</div>
+            <div class="cat-desc">MAAD / MAP member</div>
+            <div class="cat-fee">RM 550</div>
+          </label>
+          <label class="cat-opt" data-cat="NonMember" data-fee="650" data-ws="0">
+            <input type="radio" name="cat" value="NonMember">
+            <div class="cat-name">Non-Member Rate</div>
+            <div class="cat-desc">Standard registration</div>
+            <div class="cat-fee">RM 650</div>
+          </label>
+          <label class="cat-opt" data-cat="International" data-fee="800" data-ws="0">
+            <input type="radio" name="cat" value="International">
+            <div class="cat-name">International Delegate</div>
+            <div class="cat-desc">Outside Malaysia</div>
+            <div class="cat-fee">RM 800</div>
+          </label>
+          <label class="cat-opt" data-cat="Group" data-fee="500" data-ws="0">
+            <input type="radio" name="cat" value="Group">
+            <div class="cat-name">Group Registration</div>
+            <div class="cat-desc">Min. 5 persons · RM 500 per person</div>
+            <div class="cat-fee">RM 500 / person</div>
+          </label>
+        </div>
+
+        <!-- Workshop Only -->
+        <div class="cat-section-label">Workshop Only</div>
+        <div class="cat-grid" style="margin-bottom:16px">
+          <label class="cat-opt" data-cat="Workshop" data-fee="350" data-ws="1">
+            <input type="radio" name="cat" value="Workshop">
+            <div class="cat-name">1 Workshop Only</div>
+            <div class="cat-desc">Workshop access only — no conference</div>
+            <div class="cat-fee">RM 350</div>
+          </label>
+          <label class="cat-opt" data-cat="Workshop2" data-fee="600" data-ws="2">
+            <input type="radio" name="cat" value="Workshop2">
+            <div class="cat-name">2 Workshops Only</div>
+            <div class="cat-desc">Two workshops — no conference</div>
+            <div class="cat-fee">RM 600</div>
+          </label>
+        </div>
+        <div style="margin-bottom:20px;border-radius:10px;overflow:hidden;border:1px solid #e4ddd0">
+          <img src="https://fast.image.delivery/hzihmwq.png"
+               alt="Workshop Programme"
+               style="width:100%;display:block;border-radius:10px">
+        </div>
+
+        <!-- Combo Packages -->
+        <div class="cat-section-label">Combo Package — Conference + Workshop(s)</div>
+        <div class="cat-grid">
+          <label class="cat-opt" data-cat="Combo" data-fee="800" data-ws="1">
+            <input type="radio" name="cat" value="Combo">
+            <div class="cat-name">Conf + 1 Workshop</div>
+            <div class="cat-desc">Local delegate</div>
+            <div class="cat-fee">RM 800</div>
+          </label>
+          <label class="cat-opt" data-cat="Combo2" data-fee="1000" data-ws="2">
+            <input type="radio" name="cat" value="Combo2">
+            <div class="cat-name">Conf + 2 Workshops</div>
+            <div class="cat-desc">Local delegate</div>
+            <div class="cat-fee">RM 1,000</div>
+          </label>
+          <label class="cat-opt" data-cat="ComboIntl" data-fee="1000" data-ws="1">
+            <input type="radio" name="cat" value="ComboIntl">
+            <div class="cat-name">Conf + 1 Workshop</div>
+            <div class="cat-desc">International delegate</div>
+            <div class="cat-fee">RM 1,000</div>
+          </label>
+          <label class="cat-opt" data-cat="Combo2Intl" data-fee="1200" data-ws="2">
+            <input type="radio" name="cat" value="Combo2Intl">
+            <div class="cat-name">Conf + 2 Workshops</div>
+            <div class="cat-desc">International delegate</div>
+            <div class="cat-fee">RM 1,200</div>
+          </label>
+        </div>
+
+        <!-- Workshop selector — shown dynamically -->
+        <div id="workshop-wrap">
+          <p style="font-size:12px;color:#7a6f60;margin-bottom:12px">
+            Select workshop(s) — <strong id="ws-required-count">1</strong> required for this package. Each is RM 350.
+          </p>
+          <div id="ws-checkboxes">
+            <!-- SLOT A — Morning session -->
+            <div style="font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#c8a84b;padding:8px 0 4px;border-bottom:1px solid #f0ebe3;margin-bottom:4px">
+              🕗 Slot A — Morning Session
+            </div>
+            <div class="ws-item" data-slot="A">
+              <input type="checkbox" id="ws01" value="WS01 — Dr Suzuki: Endodontics" class="ws-check" data-slot="A">
+              <label for="ws01">WS01 — Dr Suzuki: Endodontics</label>
+              <span class="ws-fee-tag">RM 350</span>
+            </div>
+            <div class="ws-item" data-slot="A">
+              <input type="checkbox" id="ws03" value="WS03 — Prof Haikal: Semi-Direct" class="ws-check" data-slot="A">
+              <label for="ws03">WS03 — Prof Haikal: Semi-Direct</label>
+              <span class="ws-fee-tag">RM 350</span>
+            </div>
+            <!-- SLOT B — Afternoon session -->
+            <div style="font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#c8a84b;padding:10px 0 4px;border-bottom:1px solid #f0ebe3;margin-bottom:4px;margin-top:6px">
+              🕐 Slot B — Afternoon Session
+            </div>
+            <div class="ws-item" data-slot="B">
+              <input type="checkbox" id="ws02" value="WS02 — Dr Joan Lim: Composite" class="ws-check" data-slot="B">
+              <label for="ws02">WS02 — Dr Joan Lim: Composite</label>
+              <span class="ws-fee-tag">RM 350</span>
+            </div>
+            <div class="ws-item" data-slot="B">
+              <input type="checkbox" id="ws04" value="WS04 — Dr Ilyani: Endodontics" class="ws-check" data-slot="B">
+              <label for="ws04">WS04 — Dr Ilyani: Endodontics</label>
+              <span class="ws-fee-tag">RM 350</span>
+            </div>
+            <div class="ws-item" data-slot="B">
+              <input type="checkbox" id="ws05" value="WS05 — Dr Ian Ho: Implant Digital" class="ws-check" data-slot="B">
+              <label for="ws05">WS05 — Dr Ian Ho: Implant Digital</label>
+              <span class="ws-fee-tag">RM 350</span>
+            </div>
+          </div>
+          <p class="ws-error" id="ws-error">Please select the required number of workshops.</p>
+        </div>
+
+        <!-- Group size -->
+        <div id="group-size-wrap">
+          <div class="field" style="margin-top:4px">
+            <label>Number of Participants <span class="req">*</span></label>
+            <input type="number" name="groupSize" id="group-size" min="5" max="500" placeholder="e.g. 10">
+            <p class="hint">Minimum 5 persons. Total = number × RM 500. Invoice will be sent by the committee.</p>
+            <p class="hint" id="group-total-hint" style="color:#0f1e36;font-weight:600;margin-top:6px;display:none"></p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Additional Info -->
+    <div class="card">
+      <div class="card-hdr">Additional Information</div>
+      <div class="card-body">
+        <div class="row row-2">
+          <div class="field">
+            <label>Dietary Requirement</label>
+            <select name="diet">
+              <option value="Standard">Standard (no restriction)</option>
+              <option value="Halal">Halal</option>
+              <option value="Vegetarian">Vegetarian</option>
+              <option value="Other">Other (state in notes)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Notes / Special Requirements</label>
+          <textarea name="notes" placeholder="Any additional information…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fee Summary -->
+    <div class="fee-box" id="fee-box">
+      <div class="fee-box-inner">
+        <div>
+          <div class="fee-lbl">Registration Fee</div>
+          <div class="fee-breakdown" id="fee-breakdown"></div>
+          <div class="fee-note" id="fee-note"></div>
+        </div>
+        <div>
+          <div class="fee-val" id="fee-val"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consent -->
+    <div class="card">
+      <div class="card-hdr">Consent &amp; Declaration</div>
+      <div class="card-body">
+        <div class="consent-row">
+          <input type="checkbox" id="tnc" name="consentTnc">
+          <label for="tnc">I have read and agree to the <span class="terms-link" id="tncLink">Terms &amp; Conditions</span> of MAAD × MAP Joint Scientific Conference 2026, including the refund and cancellation policy. <span class="req">*</span></label>
+        </div>
+        <div class="consent-row">
+          <input type="checkbox" id="pdpa" name="consentPdpa">
+          <label for="pdpa">I consent to collection and processing of my personal data under Malaysia's <strong>Personal Data Protection Act 2010 (PDPA)</strong> for event registration, communication, and management purposes. <span class="req">*</span></label>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit" id="btn-submit" disabled>
+      Complete Registration →
+    </button>
+    <p class="hint" style="text-align:center;margin-top:10px">Confirmation email sent to your inbox upon submission.</p>
+
+  </form>
+
+  <!-- Success -->
+  <div id="success" class="card">
+    <div class="s-body">
+      <div class="s-icon">✅</div>
+      <h2>Registration Submitted!</h2>
+      <div class="s-id" id="s-id">—</div>
+      <p id="s-msg"></p>
+    </div>
+  </div>
+
+</div>
+
+<!-- T&C Modal -->
+<div id="tncModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Terms &amp; Conditions</h3>
+      <button class="modal-close" onclick="closeModal('tncModal')">&times;</button>
+    </div>
+    <div class="modal-body" style="text-align:left">
+      <h4>1. Registration &amp; Payment</h4>
+      <p>1.1 Registration is only confirmed upon full payment of the registration fee.</p>
+      <p>1.2 Early bird rates apply only for registrations completed and paid before 15 May 2026.</p>
+      <p>1.3 All fees are in Malaysian Ringgit (MYR).</p>
+      <h4>2. Cancellation &amp; Refund Policy</h4>
+      <p>2.1 <strong>No refunds or cancellations</strong> once registration is confirmed and payment processed.</p>
+      <p>2.2 Substitutions allowed at no charge. Written notice by <strong>1 July 2026</strong>.</p>
+      <p>2.3 If the conference is cancelled by organisers, participants receive a <strong>100% refund</strong>.</p>
+      <h4>3. Governing Law</h4>
+      <p>3.1 Governed by the laws of Malaysia.</p>
+      <p style="margin-top:16px;font-size:11px;color:#999"><strong>Last updated:</strong> 10 May 2026</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="closeModal('tncModal')">I Understand</button>
+    </div>
+  </div>
+</div>
+
+<!-- PDPA Modal -->
+<div id="pdpaModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>PDPA Notice</h3>
+      <button class="modal-close" onclick="closeModal('pdpaModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-icon">🔒</div>
+      <p style="text-align:center"><strong>MAAD × MAP JSC 2026</strong> respects your privacy.</p>
+      <h4>Purpose of Collection</h4>
+      <p>We collect your personal data for event registration, communication, and certificate issuance.</p>
+      <h4>Data Retention</h4>
+      <p>Your personal data will be retained for <strong>3 years</strong> after the conference.</p>
+      <h4>Contact Us</h4>
+      <p>Email: <strong>maadkl@yahoo.com</strong></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="closeModal('pdpaModal')">I Agree</button>
+    </div>
+  </div>
+</div>
+
+<!-- Renewal Modal -->
+<div id="renewalModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>✨ Membership Renewal Reminder</h3>
+      <button class="modal-close" onclick="closeModal('renewalModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-icon">📢</div>
+      <p style="text-align:center"><strong>Dear MAAD / MAP Member,</strong></p>
+      <p>Please ensure your membership is <strong>active and valid</strong> to enjoy the Member Rate.</p>
+      <div class="renewal-box">
+        <strong>🔑 Member Benefits:</strong><br>
+        • Save RM 100 on registration fee<br>
+        • Access to exclusive member sessions<br>
+        • Priority seating at workshops<br>
+        • Certificate with member designation
+      </div>
+      <p><strong>Renew / verify membership:</strong></p>
+      <div class="renewal-links">
+        <a href="https://maad.com.my/auth/login.php" class="renewal-btn maad" target="_blank">
+          🔵 MAAD<br><small>Aesthetic Dentistry</small>
+        </a>
+        <a href="https://dev.maprostho.com.my/auth/login.php" class="renewal-btn map" target="_blank">
+          🟡 MAP<br><small>Prosthodontics</small>
+        </a>
+      </div>
+      <p class="hint" style="font-size:11px">⚠️ If member of BOTH, renew with your preferred association.</p>
+    </div>
+    <div class="center mb-20">
+      <button id="continueAnywayBtn" class="btn-secondary" style="width:auto;padding:12px 30px">Continue as Non-Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- Workshop Conflict Modal -->
+<div id="wsConflictModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>⚠️ Workshop Time Slot Conflict</h3>
+      <button class="modal-close" onclick="closeModal('wsConflictModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-icon">🕐</div>
+      <p><strong id="ws-conflict-msg">These workshops run at the same time and cannot be selected together.</strong></p>
+      <div class="renewal-box" style="text-align:left">
+        <strong>Workshop Time Slots:</strong><br><br>
+        🕗 <strong>Slot A — Morning</strong><br>
+        &nbsp;&nbsp;• WS01 — Dr Suzuki: Endodontics<br>
+        &nbsp;&nbsp;• WS03 — Prof Haikal: Semi-Direct<br><br>
+        🕐 <strong>Slot B — Afternoon</strong><br>
+        &nbsp;&nbsp;• WS02 — Dr Joan Lim: Composite<br>
+        &nbsp;&nbsp;• WS04 — Dr Ilyani: Endodontics<br>
+        &nbsp;&nbsp;• WS05 — Dr Ian Ho: Implant Digital
+      </div>
+      <p style="font-size:12px;color:#7a6f60">For a 2-workshop combo, select one from <strong>Slot A</strong> and one from <strong>Slot B</strong>.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="closeModal('wsConflictModal')">OK, I'll fix my selection</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ── REGISTRATION CLOSED — hard block ───────────────────────
+  const REGISTRATION_CLOSED = true;
+  if (REGISTRATION_CLOSED) {
+    const form = document.getElementById('reg-form');
+    if (form) {
+      form.addEventListener('submit', e => e.preventDefault(), true);
+      form.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
+    }
+    return; // stop all other form JS from running
+  }
+
+  // ── FEE TABLE ─────────────────────────────────────────────
+  // ws = number of workshops required; 0 = no workshop selector
+  const CATS = {
+    Member:      { fee: 550,  ws: 0, label: 'Member Rate (Conference)' },
+    NonMember:   { fee: 650,  ws: 0, label: 'Non-Member Rate (Conference)' },
+    International:{ fee: 800, ws: 0, label: 'International Delegate (Conference)' },
+    Group:       { fee: 500,  ws: 0, label: 'Group Registration', perPerson: true },
+    Workshop:    { fee: 350,  ws: 1, label: '1 Workshop Only' },
+    Workshop2:   { fee: 600,  ws: 2, label: '2 Workshops Only' },
+    Combo:       { fee: 800,  ws: 1, label: 'Conf + 1 Workshop (Local)' },
+    Combo2:      { fee: 1000, ws: 2, label: 'Conf + 2 Workshops (Local)' },
+    ComboIntl:   { fee: 1000, ws: 1, label: 'Conf + 1 Workshop (International)' },
+    Combo2Intl:  { fee: 1200, ws: 2, label: 'Conf + 2 Workshops (International)' },
+  };
+
+  // ── DOM REFS ──────────────────────────────────────────────
+  const form           = document.getElementById('reg-form');
+  const alertErr       = document.getElementById('alert-err');
+  const alertSuccess   = document.getElementById('alert-success');
+  const feeBox         = document.getElementById('fee-box');
+  const feeVal         = document.getElementById('fee-val');
+  const feeNote        = document.getElementById('fee-note');
+  const feeBreakdown   = document.getElementById('fee-breakdown');
+  const wsWrap         = document.getElementById('workshop-wrap');
+  const wsRequiredCount= document.getElementById('ws-required-count');
+  const wsError        = document.getElementById('ws-error');
+  const groupSizeWrap  = document.getElementById('group-size-wrap');
+  const groupSizeInput = document.getElementById('group-size');
+  const btnSub         = document.getElementById('btn-submit');
+  const success        = document.getElementById('success');
+  const contactCard    = document.getElementById('contact-card');
+
+  let selectedCat      = null;   // category key string
+  let selectedMemberType = null;
+  let renewalPopupShown  = false;
+
+  // ── MODALS ────────────────────────────────────────────────
+  window.openModal  = id => document.getElementById(id).classList.add('active');
+  window.closeModal = id => document.getElementById(id).classList.remove('active');
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape')
+      document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+  });
+  document.querySelectorAll('.modal-overlay').forEach(m =>
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); })
+  );
+  document.getElementById('tncLink').addEventListener('click', e => { e.preventDefault(); openModal('tncModal'); });
+
+  // ── MEMBERSHIP ────────────────────────────────────────────
+  document.querySelectorAll('.member-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('.member-opt').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      opt.querySelector('input').checked = true;
+      selectedMemberType = opt.dataset.member;
+      // Auto-select conference category if none chosen yet
+      if (!selectedCat) {
+        const autoVal = selectedMemberType === 'NON_MEMBER' ? 'NonMember' : 'Member';
+        const autoOpt = document.querySelector('.cat-opt[data-cat="' + autoVal + '"]');
+        if (autoOpt) autoOpt.click();
+      }
+      checkReady();
+    });
+  });
+
+  // Renewal reminder on contact focus
+  contactCard.querySelectorAll('input, select').forEach(inp => {
+    inp.addEventListener('focus', () => {
+      const sel = document.querySelector('input[name="memberType"]:checked');
+      if (!renewalPopupShown && sel && sel.value !== 'NON_MEMBER') {
+        renewalPopupShown = true;
+        openModal('renewalModal');
+      }
+    });
+  });
+
+  // Continue as non-member
+  document.getElementById('continueAnywayBtn').addEventListener('click', () => {
+    closeModal('renewalModal');
+    const nonMemberOpt = document.querySelector('.member-opt[data-member="NON_MEMBER"]');
+    if (nonMemberOpt) nonMemberOpt.click();
+  });
+
+  // ── CATEGORY SELECTION ────────────────────────────────────
+  document.querySelectorAll('.cat-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('.cat-opt').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      opt.querySelector('input').checked = true;
+      selectedCat = opt.dataset.cat;
+
+      const cfg    = CATS[selectedCat] || {};
+      const wsNeeded = cfg.ws || 0;
+
+      // Workshop selector
+      wsWrap.style.display = wsNeeded > 0 ? 'block' : 'none';
+      if (wsNeeded > 0) {
+        wsRequiredCount.textContent = wsNeeded;
+        // Enforce max checkboxes = wsNeeded
+        enforceWsLimit(wsNeeded);
+      } else {
+        // Clear all workshop checkboxes and re-enable them
+        document.querySelectorAll('.ws-check').forEach(c => {
+          c.checked  = false;
+          c.disabled = false;
+        });
+        wsError.style.display = 'none';
+      }
+
+      // Group size field
+      groupSizeWrap.style.display = selectedCat === 'Group' ? 'block' : 'none';
+
+      updateFeeDisplay();
+      checkReady();
+    });
+  });
+
+  // Workshop checkbox change → update fee + enforce limit
+  document.querySelectorAll('.ws-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if (!selectedCat) return;
+      const cfg = CATS[selectedCat] || {};
+      enforceWsLimit(cfg.ws || 0);
+      wsError.style.display = 'none';
+      updateFeeDisplay();
+      checkReady();
+    });
+  });
+
+  // Group size input → update fee
+  groupSizeInput.addEventListener('input', () => {
+    updateFeeDisplay();
+    checkReady();
+  });
+
+  // ── WORKSHOP SLOT CONFLICT RULES ─────────────────────────
+  // Slot A: WS01, WS03 — run at the same time, cannot both be selected
+  // Slot B: WS02, WS04, WS05 — run at the same time, only one allowed per slot
+  // For 2-workshop combos: must pick one from Slot A + one from Slot B
+
+  function enforceWsLimit(max) {
+    const checks    = Array.from(document.querySelectorAll('.ws-check'));
+    const checked   = checks.filter(c => c.checked);
+    const justChecked = checks.find(c => c === document.activeElement) || null;
+
+    // 1. Enforce max count first
+    if (checked.length > max) {
+      let over = checked.length - max;
+      for (let i = checks.length - 1; i >= 0 && over > 0; i--) {
+        if (checks[i].checked && checks[i] !== justChecked) {
+          checks[i].checked = false;
+          over--;
+        }
+      }
+    }
+
+    // 2. Check slot conflicts on the current selection
+    const nowChecked = checks.filter(c => c.checked);
+    const slotA = nowChecked.filter(c => c.dataset.slot === 'A');
+    const slotB = nowChecked.filter(c => c.dataset.slot === 'B');
+
+    const conflictA = slotA.length > 1; // >1 from Slot A
+    const conflictB = slotB.length > 1; // >1 from Slot B
+
+    if (conflictA || conflictB) {
+      // Uncheck the one just ticked (the last checked in the conflicting slot)
+      const conflictMsg = conflictA
+        ? 'WS01 and WS03 run at the same time (Slot A). Please choose only one.'
+        : 'WS02, WS04, and WS05 run at the same time (Slot B). Please choose only one.';
+      document.getElementById('ws-conflict-msg').textContent = conflictMsg;
+      openModal('wsConflictModal');
+      // Uncheck the last-clicked conflicting workshop
+      const conflictSlotChecks = conflictA ? slotA : slotB;
+      // Uncheck the one that triggered the conflict (last in list = most recently checked)
+      conflictSlotChecks[conflictSlotChecks.length - 1].checked = false;
+    }
+
+    // 3. Disable checkboxes to prevent further conflicts
+    const finalChecked = checks.filter(c => c.checked);
+    const finalSlotA   = finalChecked.filter(c => c.dataset.slot === 'A').length;
+    const finalSlotB   = finalChecked.filter(c => c.dataset.slot === 'B').length;
+    const totalChecked = finalChecked.length;
+
+    checks.forEach(c => {
+      if (c.checked) { c.disabled = false; return; }
+      // Disable if: max count reached
+      if (totalChecked >= max) { c.disabled = true; return; }
+      // Disable if: this slot is already filled (one from this slot already chosen)
+      if (c.dataset.slot === 'A' && finalSlotA >= 1) { c.disabled = true; return; }
+      if (c.dataset.slot === 'B' && finalSlotB >= 1) { c.disabled = true; return; }
+      c.disabled = false;
+    });
+  }
+
+  // ── FEE DISPLAY ───────────────────────────────────────────
+  function updateFeeDisplay() {
+    if (!selectedCat) return;
+    const cfg = CATS[selectedCat] || {};
+    let total = cfg.fee || 0;
+    let breakdown = [];
+    let noteText  = '';
+
+    if (cfg.perPerson) {
+      // Group: fee per person × size — must be ≥ 5
+      const size = parseInt(groupSizeInput.value, 10) || 0;
+      const totalHint = document.getElementById('group-total-hint');
+      if (size >= 5) {
+        total = cfg.fee * size;
+        breakdown.push(size + ' persons × RM ' + cfg.fee);
+        if (totalHint) {
+          totalHint.textContent = '→ Total: RM ' + total.toLocaleString();
+          totalHint.style.display = 'block';
+        }
+      } else {
+        total = cfg.fee; // placeholder — not submittable until ≥5
+        if (size > 0 && size < 5) {
+          breakdown.push('⚠ Minimum 5 persons required');
+        } else {
+          breakdown.push('Enter number of participants');
+        }
+        if (totalHint) totalHint.style.display = 'none';
+      }
+    }
+
+    // Show selected workshops
+    const selWs = Array.from(document.querySelectorAll('.ws-check:checked')).map(c => c.value);
+    if (selWs.length > 0) {
+      breakdown.push(selWs.map(w => w.split('—')[0].trim()).join(', '));
+    }
+
+    if (total === 0) {
+      feeVal.textContent  = 'Complimentary';
+      feeVal.className    = 'fee-val free';
+      noteText            = 'No payment required';
+    } else {
+      feeVal.textContent = 'RM ' + total.toLocaleString();
+      feeVal.className   = 'fee-val';
+      noteText           = cfg.perPerson
+        ? (parseInt(groupSizeInput.value, 10) >= 5
+            ? 'Group invoice will be sent by the committee'
+            : 'Minimum 5 persons required')
+        : 'Payment via BillPlz — FPX / Online Banking / Card';
+    }
+
+    feeBreakdown.textContent = breakdown.join(' · ');
+    feeNote.textContent      = noteText;
+    feeBox.style.display     = 'block';
+  }
+
+  // ── ENABLE SUBMIT ─────────────────────────────────────────
+  function checkReady() {
+    const hasMember  = !!document.querySelector('.member-opt.selected');
+    const hasCat     = !!selectedCat;
+    const hasTnc     = document.getElementById('tnc').checked;
+    const hasPdpa    = document.getElementById('pdpa').checked;
+
+    let wsOk = true;
+    if (selectedCat) {
+      const cfg = CATS[selectedCat] || {};
+      if (cfg.ws > 0) {
+        const checked = document.querySelectorAll('.ws-check:checked').length;
+        wsOk = checked === cfg.ws;
+      }
+    }
+
+    let groupOk = true;
+    if (selectedCat === 'Group') {
+      const size = parseInt(groupSizeInput.value, 10);
+      groupOk = !isNaN(size) && size >= 5;
+      // Show inline error on the input
+      if (groupSizeInput.value && size < 5) {
+        groupSizeInput.style.borderColor = '#c0392b';
+      } else {
+        groupSizeInput.style.borderColor = '';
+      }
+    }
+
+    btnSub.disabled = !(hasMember && hasCat && hasTnc && hasPdpa && wsOk && groupOk);
+  }
+
+  document.getElementById('tnc').addEventListener('change', checkReady);
+  document.getElementById('pdpa').addEventListener('change', checkReady);
+
+  // ── SUBMIT ────────────────────────────────────────────────
+  let isSubmitting = false;
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    // Validate group size
+    if (selectedCat === 'Group') {
+      const size = parseInt(groupSizeInput.value, 10);
+      if (!size || size < 5) {
+        alertErr.innerHTML = '<strong>Please fix:</strong><ul><li>Group registration requires a minimum of 5 participants.</li></ul>';
+        alertErr.style.display = 'block';
+        groupSizeInput.focus();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        isSubmitting = false;
+        btnSub.disabled = false;
+        btnSub.textContent = 'Complete Registration →';
+        return;
+      }
+    }
+
+    // Validate workshops
+    if (selectedCat) {
+      const cfg = CATS[selectedCat] || {};
+      if (cfg.ws > 0) {
+        const checked = document.querySelectorAll('.ws-check:checked').length;
+        if (checked !== cfg.ws) {
+          wsError.textContent = 'Please select exactly ' + cfg.ws + ' workshop(s).';
+          wsError.style.display = 'block';
+          wsWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          isSubmitting = false;
+          btnSub.disabled = false;
+          btnSub.textContent = 'Complete Registration →';
+          return;
+        }
+      }
+    }
+
+    alertErr.style.display = 'none';
+    isSubmitting = true;
+    btnSub.disabled = true;
+    btnSub.textContent = 'Submitting…';
+
+    const fd   = new FormData(form);
+    const body = {};
+    fd.forEach((v, k) => { body[k] = typeof v === 'string' ? v.trim() : v; });
+    body.consentTnc  = document.getElementById('tnc').checked;
+    body.consentPdpa = document.getElementById('pdpa').checked;
+
+    // Selected workshops as comma-separated string
+    const selWs = Array.from(document.querySelectorAll('.ws-check:checked')).map(c => c.value);
+    body.workshop = selWs.join(', ') || null;
+
+    // Group size
+    if (selectedCat === 'Group') {
+      body.groupSize = parseInt(groupSizeInput.value, 10) || null;
+    }
+
+    // Membership type
+    const selMember = document.querySelector('input[name="memberType"]:checked');
+    body.memberType = selMember ? selMember.value : 'NON_MEMBER';
+
+    // Computed total fee (for Group)
+    if (selectedCat === 'Group' && body.groupSize) {
+      body.totalFee = (CATS.Group.fee * body.groupSize).toString();
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeout    = setTimeout(() => controller.abort(), 60000);
+
+      const res  = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+        signal:  controller.signal,
+      });
+
+      clearTimeout(timeout);
+      const data = await res.json();
+
+      if (!res.ok) {
+        const msgs = Array.isArray(data.details) ? data.details : [data.error || 'Registration failed'];
+        alertErr.innerHTML = '<strong>Please fix:</strong><ul>' + msgs.map(m => '<li>' + m + '</li>').join('') + '</ul>';
+        alertErr.style.display = 'block';
+        btnSub.disabled = false;
+        btnSub.textContent = 'Complete Registration →';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        isSubmitting = false;
+        return;
+      }
+
+      form.style.display = 'none';
+      document.getElementById('s-id').textContent = data.id;
+
+      const cfg = CATS[selectedCat] || {};
+      if (data.fee === 0) {
+        document.getElementById('s-msg').innerHTML =
+          'Your registration is <strong>confirmed</strong>. Check <strong>' + data.email +
+          '</strong> for your QR check-in code.';
+      } else if (selectedCat === 'Group') {
+        document.getElementById('s-msg').innerHTML =
+          'Group registration received.<br>The committee will contact <strong>' + data.email +
+          '</strong> with an invoice for ' + (body.groupSize || '') + ' participants.';
+      } else {
+        document.getElementById('s-msg').innerHTML =
+          'Payment link sent to <strong>' + data.email + '</strong>.<br>' +
+          'Complete payment to secure your seat.' +
+          (data.billUrl ? '<br><br><a href="' + data.billUrl + '" target="_blank" style="color:#c8a84b;font-weight:700;font-size:15px">Pay Now — RM ' + data.fee + ' →</a>' : '');
+      }
+
+      success.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        alertErr.innerHTML = '<strong>Request timeout.</strong> Please try again.';
+      } else {
+        alertErr.innerHTML = '<strong>Network error.</strong> Check your connection and try again.';
+      }
+      alertErr.style.display = 'block';
+      btnSub.disabled = false;
+      btnSub.textContent = 'Complete Registration →';
+      isSubmitting = false;
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

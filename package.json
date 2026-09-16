@@ -1,0 +1,31 @@
+{
+  "name": "maad-map-system",
+  "version": "1.0.0",
+  "description": "MAAD \u00d7 MAP \u2014 Event Registration, Payment & Check-in System",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "db:setup": "node server/services/db-migrate.js",
+    "db:seed": "node server/services/db-migrate.js --seed",
+    "db:reset": "node server/services/db-migrate.js --reset",
+    "db:status": "node server/services/db-migrate.js --status",
+    "email:verify": "node server/services/email-test.js verify",
+    "email:preview": "node server/services/email-test.js preview",
+    "email:test": "node server/services/email-test.js all"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "private": true,
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "helmet": "^7.1.0",
+    "mysql2": "^3.9.7",
+    "nodemailer": "^6.9.13",
+    "qrcode": "^1.5.3"
+  }
+}
