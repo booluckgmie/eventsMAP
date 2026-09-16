@@ -20,7 +20,7 @@ function getTransport() {
 }
 
 function from() {
-  return `"${process.env.EMAIL_FROM_NAME || 'MAAD × MAP JSC2026'}" <${process.env.GMAIL_USER}>`;
+  return `"${process.env.EMAIL_FROM_NAME || 'MAP Events'}" <${process.env.GMAIL_USER}>`;
 }
 
 async function verifyConnection() {
@@ -34,52 +34,80 @@ async function verifyConnection() {
   }
 }
 
-async function sendRegistrationConfirmation(p) {
-  const html = tpl.registrationConfirmation(p);
+/** Sent once, immediately after registration is submitted. */
+async function sendRegistrationConfirmation(reg, primary) {
+  const html = tpl.registrationConfirmation(reg, primary);
   await getTransport().sendMail({
     from:    from(),
-    to:      p.email,
+    to:      primary.email,
     replyTo: process.env.EMAIL_REPLY_TO || process.env.GMAIL_USER,
-    subject: `[JSC 2026] Registration Received — ${p.id}`,
+    subject: `[MMID 2027] Registration Received — ${reg.id}`,
     html,
   });
-  console.log('[EMAIL] ✓ Confirmation sent:', p.email);
+  console.log('[EMAIL] ✓ Confirmation sent:', primary.email);
 }
 
-async function sendPaymentConfirmedWithQR(p) {
-  const qrDataUrl = await qr.toBase64(p);
-  const qrBuffer  = await qr.toBuffer(p);
-  const html = tpl.paymentConfirmedWithQR(p, qrDataUrl, qrBuffer);
+/** Sent once per attendee, once the registration is paid/approved. */
+async function sendTicketWithQR(reg, attendee) {
+  const qrDataUrl = await qr.toBase64(attendee);
+  const qrBuffer  = await qr.toBuffer(attendee);
+  const html = tpl.ticketWithQR(reg, attendee, qrDataUrl);
   await getTransport().sendMail({
     from:    from(),
-    to:      p.email,
+    to:      attendee.email,
     replyTo: process.env.EMAIL_REPLY_TO || process.env.GMAIL_USER,
-    subject: `[JSC 2026] ✓ Confirmed — Your QR Code (${p.id})`,
+    subject: `[MMID 2027] ✓ Your Ticket & QR Code (${reg.id})`,
     html,
     attachments: [{
-      filename:    `QR-${p.id}.png`,
+      filename:    `QR-${reg.id}-${attendee.id}.png`,
       content:     qrBuffer,
       contentType: 'image/png',
     }],
   });
-  console.log('[EMAIL] ✓ QR email sent:', p.email);
+  console.log('[EMAIL] ✓ Ticket sent:', attendee.email);
 }
 
-async function sendPaymentReminder(p) {
-  const html = tpl.paymentReminder(p);
+/** Send tickets to every attendee on a registration (fire-and-forget per attendee). */
+async function sendAllTickets(reg) {
+  const results = await Promise.allSettled(
+    reg.attendees.map(a => sendTicketWithQR(reg, a))
+  );
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      console.error('[EMAIL] Ticket failed:', reg.attendees[i].email, r.reason?.message);
+    }
+  });
+}
+
+async function sendPaymentReminder(reg, primary) {
+  const html = tpl.paymentReminder(reg, primary);
   await getTransport().sendMail({
     from:    from(),
-    to:      p.email,
+    to:      primary.email,
     replyTo: process.env.EMAIL_REPLY_TO || process.env.GMAIL_USER,
-    subject: `[JSC 2026] ⏳ Payment Reminder — ${p.id}`,
+    subject: `[MMID 2027] ⏳ Payment Reminder — ${reg.id}`,
     html,
   });
-  console.log('[EMAIL] ✓ Reminder sent:', p.email);
+  console.log('[EMAIL] ✓ Reminder sent:', primary.email);
+}
+
+async function sendReceiptRejected(reg, primary) {
+  const html = tpl.receiptRejected(reg, primary);
+  await getTransport().sendMail({
+    from:    from(),
+    to:      primary.email,
+    replyTo: process.env.EMAIL_REPLY_TO || process.env.GMAIL_USER,
+    subject: `[MMID 2027] Payment Receipt Not Verified — ${reg.id}`,
+    html,
+  });
+  console.log('[EMAIL] ✓ Rejection notice sent:', primary.email);
 }
 
 module.exports = {
   verifyConnection,
   sendRegistrationConfirmation,
-  sendPaymentConfirmedWithQR,
+  sendTicketWithQR,
+  sendAllTickets,
   sendPaymentReminder,
+  sendReceiptRejected,
 };

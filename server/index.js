@@ -40,6 +40,14 @@ app.use('/api/register', rateLimit({
   legacyHeaders: false,
 }));
 
+// The static root below is the repo root (no dedicated "public" folder),
+// so explicitly block backend source/config from being served directly.
+const BLOCKED_STATIC = /^\/(server|sql|node_modules|tests?)(\/|$)|^\/(package(-lock)?\.json|\.env.*|README\.md|DEPLOY-PLESK\.md)$/i;
+app.use((req, res, next) => {
+  if (BLOCKED_STATIC.test(req.path)) return res.status(404).end();
+  next();
+});
+
 app.use(express.static(path.join(__dirname, '../')));
 app.use(express.static(path.join(__dirname, '../frontend')));
 
@@ -51,7 +59,7 @@ app.use('/api/billplz',      require('./routes/billplz'));
 // ... rest of file unchanged ...
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../registrationM2.html'));
+  res.sendFile(path.join(__dirname, '../registration.html'));
 });
 
 app.get('/payment-success', (req, res) => {
@@ -77,13 +85,20 @@ app.get('/admin.html', (req, res) => {
 // Global error handler
 app.use((err, req, res, _next) => {
   console.error('[ERROR]', err.message);
+  if (err.name === 'MulterError' || /receipts? are allowed/i.test(err.message || '')) {
+    return res.status(400).json({ error: err.message });
+  }
   res.status(500).json({ error: 'Internal server error' });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
-  console.log(`[BOOT] Server on port ${PORT}`);
-  await db.testConnection();
-});
+// On Vercel, the platform invokes this exported app per-request via its
+// Node.js runtime — it must not bind a port itself.
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, async () => {
+    console.log(`[BOOT] Server on port ${PORT}`);
+    await db.testConnection();
+  });
+}
 
 module.exports = app;

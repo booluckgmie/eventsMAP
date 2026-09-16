@@ -7,13 +7,12 @@ const billplz = require('./billplz');
 const mailer  = require('./email');
 
 const TEST = {
-  id:    'NX-TEST-01',
-  name:  'Ahmad Myketapang',
-  email: process.env.TEST_EMAIL || 'myketapang@gmail.com',
+  id:    'MMID27-TEST-01',
+  name:  'Ahmad Test',
+  email: process.env.TEST_EMAIL || 'test@example.com',
   phone: '0123456789',
-  fee:   550,
-  cat:   'Member',
-  notes: 'Test registration — sandbox',
+  fee:   400,
+  categoryLabel: 'Lecture Only - MAP Member (sandbox test)',
 };
 
 (async () => {
