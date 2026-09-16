@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/index.js": {
-      "includeFiles": "{registration.html,admin.html,payment-success.html,frontend/**}"
+      "includeFiles": "{registration.html,admin.html,payment-success.html,frontend/**,assets/**}"
     }
   },
   "rewrites": [
