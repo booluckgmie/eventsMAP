@@ -51,7 +51,7 @@ app.use('/api/billplz',      require('./routes/billplz'));
 // ... rest of file unchanged ...
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../registrationM2.html'));
+  res.sendFile(path.join(__dirname, '../registration.html'));
 });
 
 app.get('/payment-success', (req, res) => {
