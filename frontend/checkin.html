@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<html lang="en" class="h-full bg-white text-slate-900">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,79 +14,79 @@
         } } } }
     </script>
     <style>
-        .glass-panel { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(15, 23, 42, 0.08); box-shadow: 0 1px 3px rgba(15,23,42,0.05); }
         #qr-reader { border-radius: 1rem; overflow: hidden; }
         #qr-reader video { border-radius: 1rem; }
     </style>
 </head>
 <body class="h-full flex flex-col font-sans antialiased">
 
-    <header class="sticky top-0 z-40 glass-panel border-b border-slate-800">
+    <header class="sticky top-0 z-40 glass-panel border-b border-slate-200">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-500 flex items-center justify-center text-white font-bold text-lg"><i class="fa-solid fa-qrcode"></i></div>
-                <div><span class="font-bold text-lg text-white tracking-tight">MAP Events — Check-In</span><span class="block text-xs text-slate-400 font-medium">MMID 2027 Onsite Desk</span></div>
+                <div><span class="font-bold text-lg text-slate-900 tracking-tight">MAP Events — Check-In</span><span class="block text-xs text-slate-500 font-medium">MMID 2027 Onsite Desk</span></div>
             </div>
         </div>
     </header>
 
     <main class="flex-1 overflow-y-auto py-8 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full space-y-8">
         <div class="text-center space-y-2">
-            <h1 class="text-3xl font-bold text-white">Delegate Check-In Station</h1>
-            <p class="text-xs text-slate-400 max-w-lg mx-auto">Scan a delegate's QR ticket or search by name/NRIC to check them in.</p>
+            <h1 class="text-3xl font-bold text-slate-900">Delegate Check-In Station</h1>
+            <p class="text-xs text-slate-500 max-w-lg mx-auto">Scan a delegate's QR ticket or search by name/NRIC to check them in.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-            <div class="md:col-span-6 glass-panel p-6 rounded-3xl border border-slate-800 space-y-6">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <span class="text-xs font-bold text-white flex items-center gap-2"><i class="fa-solid fa-camera text-accent-400"></i> QR Code Scanner</span>
+            <div class="md:col-span-6 glass-panel p-6 rounded-3xl border border-slate-200 space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <span class="text-xs font-bold text-slate-900 flex items-center gap-2"><i class="fa-solid fa-camera text-accent-400"></i> QR Code Scanner</span>
                     <button id="btn-toggle-scanner" class="text-[10px] bg-brand-500/20 text-brand-300 px-2 py-0.5 rounded-full font-bold">Start Camera</button>
                 </div>
                 <div id="qr-reader" class="w-full"></div>
-                <div id="qr-reader-placeholder" class="w-full aspect-square bg-slate-950 rounded-2xl border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-center p-6">
-                    <i class="fa-solid fa-qrcode text-6xl text-slate-700 mb-3"></i>
-                    <p class="text-xs text-slate-400 font-medium">Click "Start Camera" to begin scanning</p>
+                <div id="qr-reader-placeholder" class="w-full aspect-square bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-center p-6">
+                    <i class="fa-solid fa-qrcode text-6xl text-slate-300 mb-3"></i>
+                    <p class="text-xs text-slate-500 font-medium">Click "Start Camera" to begin scanning</p>
                 </div>
 
                 <div class="space-y-2">
-                    <label class="block text-xs font-semibold text-slate-300">Or Search Registrant Manually</label>
+                    <label class="block text-xs font-semibold text-slate-600">Or Search Registrant Manually</label>
                     <div class="flex gap-2">
-                        <input type="text" id="onsite-search-input" placeholder="Type NRIC, Name, MDC, or Ref..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
+                        <input type="text" id="onsite-search-input" placeholder="Type NRIC, Name, MDC, or Ref..." class="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none">
                         <button onclick="handleManualSearch()" class="px-4 py-2 bg-accent-600 hover:bg-accent-500 text-white font-bold text-xs rounded-xl">Search</button>
                     </div>
                     <div id="search-results" class="space-y-1.5 pt-1"></div>
                 </div>
             </div>
 
-            <div class="md:col-span-6 glass-panel p-6 rounded-3xl border border-slate-800 space-y-6">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <span class="text-xs font-bold text-white flex items-center gap-2"><i class="fa-solid fa-id-badge text-brand-400"></i> Verification</span>
-                    <span id="scan-status-badge" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-bold">Awaiting Scan</span>
+            <div class="md:col-span-6 glass-panel p-6 rounded-3xl border border-slate-200 space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <span class="text-xs font-bold text-slate-900 flex items-center gap-2"><i class="fa-solid fa-id-badge text-brand-400"></i> Verification</span>
+                    <span id="scan-status-badge" class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-bold">Awaiting Scan</span>
                 </div>
 
-                <div id="result-empty" class="py-12 text-center text-slate-500 space-y-3">
-                    <i class="fa-solid fa-user-check text-5xl text-slate-800"></i>
+                <div id="result-empty" class="py-12 text-center text-slate-400 space-y-3">
+                    <i class="fa-solid fa-user-check text-5xl text-slate-200"></i>
                     <p class="text-xs">No delegate scanned yet.</p>
                 </div>
 
                 <div id="result-active" class="hidden space-y-4">
-                    <div class="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-brand-950/40 border border-slate-700/80 space-y-3">
+                    <div class="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-brand-50 border border-slate-300/70 space-y-3">
                         <div class="flex justify-between items-start">
                             <div>
                                 <span id="pass-ref" class="text-[10px] font-mono text-brand-400"></span>
-                                <h3 id="pass-name" class="text-base font-bold text-white"></h3>
-                                <p id="pass-institution" class="text-xs text-slate-400"></p>
+                                <h3 id="pass-name" class="text-base font-bold text-slate-900"></h3>
+                                <p id="pass-institution" class="text-xs text-slate-500"></p>
                             </div>
-                            <span id="pass-checkin-tag" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300">NOT CHECKED IN</span>
+                            <span id="pass-checkin-tag" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">NOT CHECKED IN</span>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 text-xs border-t border-b border-slate-800/80 py-2 text-slate-300">
-                            <div><span class="text-slate-500 text-[10px] block">NRIC/Passport</span><strong id="pass-nric" class="font-mono"></strong></div>
-                            <div><span class="text-slate-500 text-[10px] block">MDC Registration</span><strong id="pass-mdc" class="font-mono"></strong></div>
-                            <div><span class="text-slate-500 text-[10px] block">Package</span><strong id="pass-package" class="text-brand-300"></strong></div>
-                            <div><span class="text-slate-500 text-[10px] block">Food Preference</span><strong id="pass-food" class="text-amber-400"></strong></div>
+                        <div class="grid grid-cols-2 gap-2 text-xs border-t border-b border-slate-200/80 py-2 text-slate-600">
+                            <div><span class="text-slate-400 text-[10px] block">NRIC/Passport</span><strong id="pass-nric" class="font-mono"></strong></div>
+                            <div><span class="text-slate-400 text-[10px] block">MDC Registration</span><strong id="pass-mdc" class="font-mono"></strong></div>
+                            <div><span class="text-slate-400 text-[10px] block">Package</span><strong id="pass-package" class="text-brand-300"></strong></div>
+                            <div><span class="text-slate-400 text-[10px] block">Food Preference</span><strong id="pass-food" class="text-amber-400"></strong></div>
                         </div>
                         <div class="flex items-center justify-between text-xs pt-1">
-                            <span class="text-slate-400">Payment Verification:</span>
+                            <span class="text-slate-500">Payment Verification:</span>
                             <span id="pass-payment-status" class="font-bold"></span>
                         </div>
                     </div>
@@ -159,11 +159,11 @@
                 const data = await res.json();
                 const box = document.getElementById('search-results');
                 box.innerHTML = '';
-                if (!data.data.length) { box.innerHTML = '<p class="text-[11px] text-slate-500">No matches found.</p>'; return; }
+                if (!data.data.length) { box.innerHTML = '<p class="text-[11px] text-slate-400">No matches found.</p>'; return; }
                 data.data.forEach(a => {
                     box.insertAdjacentHTML('beforeend', `
-                        <button onclick="lookupByQr('${a.qrHash}')" class="w-full text-left px-3 py-2 bg-slate-900 hover:bg-slate-800 rounded-lg text-[11px] border border-slate-800 flex justify-between">
-                            <span class="text-slate-200">${a.fullName}</span><span class="text-slate-500 font-mono">${a.registrationId}</span>
+                        <button onclick="lookupByQr('${a.qrHash}')" class="w-full text-left px-3 py-2 bg-white hover:bg-slate-100 rounded-lg text-[11px] border border-slate-200 flex justify-between">
+                            <span class="text-slate-700">${a.fullName}</span><span class="text-slate-400 font-mono">${a.registrationId}</span>
                         </button>`);
                 });
             } catch (e) { showToast('Search failed', 'error'); }
@@ -192,7 +192,7 @@
             if (attendee.checkedIn) {
                 tag.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
                 tag.textContent = `CHECKED IN AT ${new Date(attendee.ciAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-                actionBox.innerHTML = '<div class="p-3 bg-slate-900 rounded-xl text-center text-xs text-slate-400"><i class="fa-solid fa-check-double text-emerald-400 mr-1"></i> Already checked in.</div>';
+                actionBox.innerHTML = '<div class="p-3 bg-white rounded-xl text-center text-xs text-slate-500"><i class="fa-solid fa-check-double text-emerald-400 mr-1"></i> Already checked in.</div>';
             } else if (!registration.paid) {
                 tag.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30';
                 tag.textContent = 'PAYMENT NOT CONFIRMED';
@@ -221,9 +221,9 @@
         function showToast(message, type) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            let bg = 'bg-slate-900 text-white border-slate-700';
-            if (type === 'success') bg = 'bg-emerald-950 text-emerald-200 border-emerald-700/60';
-            if (type === 'error') bg = 'bg-rose-950 text-rose-200 border-rose-700/60';
+            let bg = 'bg-white text-slate-900 border-slate-300';
+            if (type === 'success') bg = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            if (type === 'error') bg = 'bg-rose-50 text-rose-700 border-rose-200';
             toast.className = `p-3.5 rounded-xl border ${bg} text-xs shadow-2xl flex items-center gap-2 pointer-events-auto`;
             toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${message}</span>`;
             container.appendChild(toast);
