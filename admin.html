@@ -55,8 +55,8 @@
                 <div class="mt-2 flex items-baseline gap-2"><span id="metric-paid-count" class="text-2xl font-bold text-emerald-400">0</span><span id="metric-total-revenue" class="text-xs text-slate-500">RM 0</span></div>
             </div>
             <div class="glass-card p-4 rounded-2xl border border-slate-200">
-                <div class="flex items-center justify-between"><span class="text-xs font-semibold text-slate-500">Pending Verification</span><span class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs"><i class="fa-solid fa-clock"></i></span></div>
-                <div class="mt-2 flex items-baseline gap-2"><span id="metric-pending-count" class="text-2xl font-bold text-amber-400">0</span><span class="text-[10px] text-amber-300/80">Manual Receipt Uploads</span></div>
+                <div class="flex items-center justify-between"><span class="text-xs font-semibold text-slate-500">Pending Verification</span><span class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center text-xs"><i class="fa-solid fa-clock"></i></span></div>
+                <div class="mt-2 flex items-baseline gap-2"><span id="metric-pending-count" class="text-2xl font-bold text-amber-700">0</span><span class="text-[10px] text-amber-700/80">Manual Receipt Uploads</span></div>
             </div>
             <div class="glass-card p-4 rounded-2xl border border-slate-200">
                 <div class="flex items-center justify-between"><span class="text-xs font-semibold text-slate-500">Checked In Onsite</span><span class="w-8 h-8 rounded-lg bg-accent-500/20 text-accent-400 flex items-center justify-center text-xs"><i class="fa-solid fa-user-check"></i></span></div>
@@ -208,7 +208,7 @@
         function statusBadge(status) {
             const map = {
                 PAID:             '<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold"><i class="fa-solid fa-check mr-1"></i>PAID</span>',
-                PENDING:          '<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold"><i class="fa-solid fa-clock mr-1"></i>VERIFY</span>',
+                PENDING:          '<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 border border-amber-500/20 text-[10px] font-bold"><i class="fa-solid fa-clock mr-1"></i>VERIFY</span>',
                 REJECTED:         '<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">REJECTED</span>',
                 AWAITING_PAYMENT: '<span class="px-2 py-0.5 rounded bg-slate-700/50 text-slate-600 border border-slate-600 text-[10px] font-bold">AWAITING PAY</span>',
             };
@@ -247,7 +247,7 @@
 
                 let actions = `<button onclick="openAttendeesModal('${reg.id}')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[11px] font-sans">Tickets</button>`;
                 if (status === 'PENDING') {
-                    actions = `<button onclick="openReceiptModal('${reg.id}')" class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded text-[11px] font-sans font-semibold border border-amber-500/30 mr-1">Review</button>` + actions;
+                    actions = `<button onclick="openReceiptModal('${reg.id}')" class="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 rounded text-[11px] font-sans font-semibold border border-amber-500/30 mr-1">Review</button>` + actions;
                 }
                 if (status === 'AWAITING_PAYMENT') {
                     actions = `<button onclick="verifyBillplzPayment('${reg.id}')" class="px-2 py-1 bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 rounded text-[11px] font-sans font-semibold border border-brand-500/30 mr-1">Verify</button>` + actions;
