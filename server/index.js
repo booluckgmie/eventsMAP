@@ -91,10 +91,14 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
-  console.log(`[BOOT] Server on port ${PORT}`);
-  await db.testConnection();
-});
+// On Vercel, the platform invokes this exported app per-request via its
+// Node.js runtime — it must not bind a port itself.
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, async () => {
+    console.log(`[BOOT] Server on port ${PORT}`);
+    await db.testConnection();
+  });
+}
 
 module.exports = app;
