@@ -12,15 +12,12 @@ const X_SIGNATURE_KEY = process.env.BILLPLZ_X_SIGNATURE_KEY;
 // Sandbox toggle: set BILLPLZ_SANDBOX=true (or 1) for sandbox mode
 const isSandbox = process.env.BILLPLZ_SANDBOX === 'true' || process.env.BILLPLZ_SANDBOX === '1';
 
-// Validate required environment variables
-if (!BILLPLZ_API_KEY) {
-  throw new Error('[BILLPLZ] Missing environment variable: BILLPLZ_API_KEY');
-}
-if (!COLLECTION_ID) {
-  throw new Error('[BILLPLZ] Missing environment variable: BILLPLZ_COLLECTION_ID');
-}
-if (!X_SIGNATURE_KEY) {
-  throw new Error('[BILLPLZ] Missing environment variable: BILLPLZ_X_SIGNATURE_KEY (required for webhook verification)');
+// Validated lazily (on first actual use), not at module load — a missing
+// Billplz credential must not crash routes that never touch Billplz.
+function assertConfigured() {
+  if (!BILLPLZ_API_KEY) throw new Error('[BILLPLZ] Missing environment variable: BILLPLZ_API_KEY');
+  if (!COLLECTION_ID)   throw new Error('[BILLPLZ] Missing environment variable: BILLPLZ_COLLECTION_ID');
+  if (!X_SIGNATURE_KEY) throw new Error('[BILLPLZ] Missing environment variable: BILLPLZ_X_SIGNATURE_KEY (required for webhook verification)');
 }
 
 function getApiBase() {
@@ -38,6 +35,7 @@ function getWebBase() {
 
 // ── Low-level request helper ──────────────────────────────────
 function apiRequest(method, path, body) {
+  assertConfigured();
   return new Promise((resolve, reject) => {
     const auth = Buffer.from(`${BILLPLZ_API_KEY}:`).toString('base64');
     const payload = body ? JSON.stringify(body) : null;
