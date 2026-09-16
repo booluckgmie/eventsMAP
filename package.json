@@ -1,7 +1,7 @@
 {
   "name": "maad-map-system",
   "version": "1.0.0",
-  "description": "MAAD \u00d7 MAP \u2014 Event Registration, Payment & Check-in System",
+  "description": "MAAD × MAP — Event Registration, Payment & Check-in System",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
@@ -24,6 +24,7 @@
     "express": "^4.19.2",
     "express-rate-limit": "^7.3.1",
     "helmet": "^7.1.0",
+    "multer": "^2.4.0",
     "mysql2": "^3.9.7",
     "nodemailer": "^6.9.13",
     "qrcode": "^1.5.3"

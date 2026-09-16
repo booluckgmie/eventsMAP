@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Payment Successful | MAAD × MAP JSC 2026</title>
+    <title>Payment Successful | MAP Events — MMID 2027</title>
     <style>
         * {
             margin: 0;
@@ -247,8 +247,8 @@
 <body>
     <div class="card">
         <div class="card-header">
-            <div class="logo">MAAD <span>×</span> MAP</div>
-            <div class="badge">JSC 2026 · Payment Confirmation</div>
+            <div class="logo">MAP <span>Events</span></div>
+            <div class="badge">MMID 2027 · Payment Confirmation</div>
         </div>
 
         <div class="card-body">
@@ -259,7 +259,7 @@
                 </svg>
             </div>
             <h1>Payment Successful! 🎉</h1>
-            <div class="subtitle">Your registration for JSC 2026 is confirmed.</div>
+            <div class="subtitle">Your registration for MMID 2027 is confirmed.</div>
 
             <div class="qr-wrap" id="qrWrap" style="display: none;">
                 <img id="qrImage" src="" width="200" height="200" alt="QR Code">
@@ -279,15 +279,15 @@
             </div>
 
             <div class="footer">
-                For any assistance, contact us at <a href="mailto:maadmalaysia@gmail.com" style="color:#0f1e36;">maadmalaysia@gmail.com</a>
+                For any assistance, contact us at <a href="mailto:maprostho@gmail.com" style="color:#0f1e36;">maprostho@gmail.com</a>
             </div>
 				<div>
 		<div class="container">
-        <div class="logo">MAAD <span>×</span> MAP</div>
+        <div class="logo">MAP <span>Events</span></div>
         <div class="spinner"></div>
-        <p>Redirecting to JSC 2026 Registration page...</p>
+        <p>Redirecting to the registration page...</p>
         <div class="countdown">Please wait <span id="seconds">5</span> seconds</div>
-        <a href="/registrationM.html" class="btn">Click here if not redirected →</a>
+        <a href="/" class="btn">Click here if not redirected →</a>
     </div>
         </div>
     </div>
@@ -300,7 +300,7 @@
             countdownEl.textContent = seconds;
             if (seconds <= 0) {
                 clearInterval(interval);
-                window.location.href = '/registrationM.html';
+                window.location.href = '/';
             }
         }, 1000);
 
@@ -318,7 +318,7 @@
             } else if (billId) {
                 document.getElementById('regId').innerHTML = `<span style="font-family: monospace;">${billId}</span><span style="font-size: 11px; margin-left: 8px;">(bill reference)</span>`;
             } else {
-                document.getElementById('regId').innerText = 'JSC2026-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                document.getElementById('regId').innerText = 'MMID27-' + Math.random().toString(36).substring(2, 10).toUpperCase();
             }
 
             if (regEmail) {
@@ -340,7 +340,7 @@
                         sessionStorage.removeItem('jsc2026_registration');
                     } else {
                         document.getElementById('regEmail').innerHTML = 'registered email';
-                        document.getElementById('regCat').innerText = 'MAAD / MAP Member';
+                        document.getElementById('regCat').innerText = 'MAP Member';
                         document.getElementById('regAmount').innerHTML = 'RM 550';
                     }
                 } catch(e) {

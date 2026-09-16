@@ -107,23 +107,20 @@ function apiRequest(method, path, body) {
 }
 
 // ── Create a BillPlz bill ─────────────────────────────────────
-async function createBill({ id, name, email, phone, fee, cat, notes, memberType }) {
+async function createBill({ id, name, email, phone, fee, categoryLabel }) {
   // Amount in sen (cents) — RM × 100
   const amountSen = Math.round(fee * 100);
 
   // Format phone number for Malaysia
-  let mobile = phone.replace(/[^\d+]/g, '');
+  let mobile = (phone || '').replace(/[^\d+]/g, '');
   if (mobile.startsWith('0') && !mobile.startsWith('+60')) {
     mobile = '+60' + mobile.substring(1);
   } else if (!mobile.startsWith('+')) {
     mobile = '+60' + mobile;
   }
 
-  const workshopMatch = (notes || '').match(/Workshop:\s*([^|]+)/);
-  const workshopPart  = workshopMatch ? workshopMatch[1].trim() : '';
-  const desc = workshopPart
-    ? `JSC 2026 - ${cat} | Workshop: ${workshopPart}`.slice(0, 200)
-    : `JSC 2026 - ${cat}`;
+  const baseUrl = process.env.FRONTEND_URL || 'https://events.maprostho.com.my';
+  const desc = `MMID 2027 - ${categoryLabel}`.slice(0, 200);
 
   const body = {
     collection_id: COLLECTION_ID,
@@ -131,13 +128,11 @@ async function createBill({ id, name, email, phone, fee, cat, notes, memberType 
     mobile: mobile,
     name: name.slice(0, 100),
     amount: amountSen,
-    callback_url: 'https://events.maad.com.my/api/billplz/webhook',
-    redirect_url: 'https://events.maad.com.my/api/billplz/redirect',
+    callback_url: `${baseUrl}/api/billplz/webhook`,
+    redirect_url: `${baseUrl}/api/billplz/redirect`,
     description: desc,
     reference_1_label: 'Registration ID',
     reference_1: id,
-    reference_2_label: 'Category',
-    reference_2: cat,
     due_at: dueDateStr(7),
   };
 
@@ -146,8 +141,7 @@ async function createBill({ id, name, email, phone, fee, cat, notes, memberType 
     name,
     email,
     amount: `RM ${fee} (${amountSen} sen)`,
-    cat,
-    memberType,
+    categoryLabel,
     mode: isSandbox ? 'SANDBOX' : 'PRODUCTION'
   });
 

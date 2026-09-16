@@ -42,35 +42,34 @@ router.post('/webhook', async (req, res) => {
       return res.status(200).json({ received: true, action: 'ignored' });
     }
 
-    // 3. Find participant by BillPlz bill id, fallback to reference_1
+    // 3. Find registration by BillPlz bill id, fallback to reference_1
     const billId = body.id;
-    let participant = await db.findBy('billId', billId);
-    if (!participant && body.reference_1) {
-      participant = await db.findById(body.reference_1);
+    let reg = await db.findRegistrationByBillId(billId);
+    if (!reg && body.reference_1) {
+      reg = await db.findRegistrationById(body.reference_1);
     }
 
-    if (!participant) {
-      console.error('[WEBHOOK] No participant for billId:', billId);
+    if (!reg) {
+      console.error('[WEBHOOK] No registration for billId:', billId);
       return res.status(200).json({ received: true, action: 'not_found' });
     }
 
-    if (participant.paid) {
-      console.log('[WEBHOOK] Already paid:', participant.id);
+    if (reg.paid) {
+      console.log('[WEBHOOK] Already paid:', reg.id);
       return res.status(200).json({ received: true, action: 'already_paid' });
     }
 
     // 4. Mark paid in DB
-    const now = new Date().toISOString().slice(0,19).replace('T',' ');
-    await db.update(participant.id, { paid: true, paidAt: now });
-    participant = { ...participant, paid: true, paidAt: now };
-    console.log('[WEBHOOK] ✓ Marked paid:', participant.id, participant.email);
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    reg = await db.updateRegistration(reg.id, { paid: true, paidAt: now });
+    console.log('[WEBHOOK] ✓ Marked paid:', reg.id);
 
-    // 5. Send QR email
-    mailer.sendPaymentConfirmedWithQR(participant)
-      .then(() => console.log('[WEBHOOK] ✓ QR email sent:', participant.email))
-      .catch(e => console.error('[WEBHOOK] QR email failed:', e.message));
+    // 5. Send ticket + QR email to every attendee
+    mailer.sendAllTickets(reg)
+      .then(() => console.log('[WEBHOOK] ✓ Tickets sent for:', reg.id))
+      .catch(e => console.error('[WEBHOOK] Ticket send failed:', e.message));
 
-    return res.status(200).json({ received: true, action: 'paid', id: participant.id });
+    return res.status(200).json({ received: true, action: 'paid', id: reg.id });
 
   } catch (err) {
     console.error('[WEBHOOK] Error:', err.message);

@@ -1,127 +1,193 @@
-// server/routes/registration.js — JSC 2026
+// server/routes/registration.js — MMID 2027
 'use strict';
 
 const express  = require('express');
+const multer   = require('multer');
 const router   = express.Router();
 const ev       = require('../event-config');
 const db       = require('../services/db');
 const mailer   = require('../services/email');
 const billplz  = require('../services/billplz');
 
-// All valid categories pulled from event-config
-const VALID_CATS = Object.keys(ev.fees);
+// ── Receipt upload (manual bank transfer proof) ─────────────────
+// Stored in the database as base64, not on disk — the app runs on
+// serverless platforms with no persistent local filesystem.
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'application/pdf']);
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (!ALLOWED_MIME.has(file.mimetype)) return cb(new Error('Only JPG, PNG, WEBP or PDF receipts are allowed'));
+    cb(null, true);
+  },
+});
 
-function validate(b) {
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validatePerson(p, label) {
   const errors = [];
-  if (!b.name?.trim())                                    errors.push('name is required');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email || '')) errors.push('valid email required');
-  if ((b.phone||'').replace(/[\s\-()+]/g,'').length < 9)  errors.push('valid mobile number required');
-  if (!b.ic?.trim() && !b.passport?.trim())               errors.push('IC or passport number required');
-  if (!VALID_CATS.includes(b.cat))                        errors.push('valid attendance category required');
-  if (['Workshop','Combo','ComboIntl'].includes(b.cat) && !b.workshop?.trim())
-    errors.push('workshop selection required for this category');
-  if (!b.consentTnc)  errors.push('Terms & Conditions consent required');
-  if (!b.consentPdpa) errors.push('PDPA consent required');
+  if (!p.fullName?.trim())                errors.push(`${label}: full name is required`);
+  if (!p.nricPassport?.trim())             errors.push(`${label}: NRIC/passport is required`);
+  if (!EMAIL_RE.test(p.email || ''))       errors.push(`${label}: valid email is required`);
   return errors;
 }
 
-router.post('/', async (req, res) => {
+function validate(b) {
+  const errors = [];
+  if (!['SINGLE', 'GROUP'].includes(b.regMode))            errors.push('valid registration mode required');
+  if (!['LECTURE_ONLY', 'COMBO'].includes(b.packageType))  errors.push('valid package type required');
+  if (!['MAP_MEMBER', 'NON_MEMBER'].includes(b.membership)) errors.push('valid membership category required');
+  if (!['BILLPLZ', 'MANUAL_RECEIPT'].includes(b.paymentMethod)) errors.push('valid payment method required');
+  if (!b.consentTnc || b.consentTnc === 'false')   errors.push('Terms & Conditions consent required');
+  if (!b.consentPdpa || b.consentPdpa === 'false') errors.push('PDPA consent required');
+
+  const primary = b.primary || {};
+  errors.push(...validatePerson(primary, 'Primary delegate'));
+  if ((primary.phoneMobile || '').replace(/[\s\-()+]/g, '').length < 9) {
+    errors.push('Primary delegate: valid mobile number required');
+  }
+  if (!primary.addressPractice?.trim()) errors.push('Primary delegate: address of practice is required');
+
+  let groupMembers = [];
+  if (b.regMode === 'GROUP') {
+    groupMembers = Array.isArray(b.groupMembers) ? b.groupMembers : [];
+    if (groupMembers.length !== 4) {
+      errors.push('Group registration requires exactly 4 additional delegates');
+    } else {
+      groupMembers.forEach((g, i) => errors.push(...validatePerson(g, `Delegate #${i + 2}`)));
+    }
+  }
+
+  return { errors, groupMembers };
+}
+
+router.post('/', upload.single('receipt'), async (req, res) => {
   try {
-    const b = req.body;
+    // multipart/form-data sends nested objects as JSON strings
+    const b = { ...req.body };
+    if (typeof b.primary === 'string')      b.primary = JSON.parse(b.primary);
+    if (typeof b.groupMembers === 'string') b.groupMembers = JSON.parse(b.groupMembers);
 
     // 1. Validate
-    const errors = validate(b);
-    if (errors.length)
+    const { errors, groupMembers } = validate(b);
+    if (b.paymentMethod === 'MANUAL_RECEIPT' && !req.file) {
+      errors.push('Payment receipt file is required for bank transfer');
+    }
+    if (errors.length) {
       return res.status(400).json({ error: 'Validation failed', details: errors });
+    }
 
-    // 2. Capacity check
+    // 2. Pricing
+    const tier = ev.getTier(b.packageType, b.membership, b.regMode);
+
+    // 3. Capacity check
     const stats = await db.getStats();
-    if (stats.total >= ev.capacity)
-      return res.status(409).json({ error: 'Registration is full', capacity: ev.capacity });
+    if (stats.totalAttendees + tier.pax > ev.capacity) {
+      return res.status(409).json({ error: 'Not enough seats remaining', capacity: ev.capacity, seatsLeft: stats.seatsLeft });
+    }
 
-    // 3. Duplicate email
-    const email = (b.email || '').trim().toLowerCase();
-    if (await db.emailExists(email))
+    // 4. Duplicate email (primary)
+    const primaryEmail = (b.primary.email || '').trim().toLowerCase();
+    if (await db.emailExists(primaryEmail)) {
       return res.status(409).json({ error: 'This email is already registered' });
+    }
 
-    // 4. Build record
-    const id  = await db.nextId();
-    const fee = ev.fees[b.cat];
-    const now = new Date().toISOString().slice(0,19).replace('T',' ');
+    // 5. Build attendee list
+    const attendees = [
+      {
+        title:           b.primary.title?.trim()      || '',
+        fullName:        b.primary.fullName.trim().toUpperCase(),
+        nricPassport:    b.primary.nricPassport.trim(),
+        email:           primaryEmail,
+        phoneMobile:     b.primary.phoneMobile?.trim() || null,
+        phoneOffice:     b.primary.phoneOffice?.trim() || null,
+        institution:     b.primary.institution?.trim() || null,
+        addressPractice: b.primary.addressPractice?.trim() || null,
+        mdcNo:           b.primary.mdcNo?.trim() || null,
+        foodPreference:  b.primary.foodPreference || 'Non-vegetarian',
+      },
+      ...groupMembers.map(g => ({
+        title:           g.title?.trim() || '',
+        fullName:        g.fullName.trim().toUpperCase(),
+        nricPassport:    g.nricPassport.trim(),
+        email:           (g.email || '').trim().toLowerCase(),
+        phoneMobile:     b.primary.phoneMobile?.trim() || null,
+        phoneOffice:     null,
+        institution:     b.primary.institution?.trim() || null,
+        addressPractice: null,
+        mdcNo:           g.mdcNo?.trim() || null,
+        foodPreference:  g.foodPreference || 'Non-vegetarian',
+      })),
+    ];
 
-    // Workshop goes into notes field with clear label
-    const workshopNote = b.workshop ? `Workshop: ${b.workshop}` : '';
-    const extraNotes   = b.notes?.trim() || '';
-    const notes        = [workshopNote, extraNotes].filter(Boolean).join(' | ') || null;
+    // 6. Registration id + BillPlz bill (if applicable)
+    const id = await db.nextId();
+    let billId = null, billUrl = null;
 
-    // Create real BillPlz bill for paid categories
-    let billId  = null;
-    let billUrl = null;
-    if (fee > 0) {
+    if (b.paymentMethod === 'BILLPLZ') {
       const bill = await billplz.createBill({
-        id, name: b.name.trim(), email,
-        phone: b.phone.trim(), fee, cat: b.cat, notes,
+        id,
+        name:  attendees[0].fullName,
+        email: primaryEmail,
+        phone: attendees[0].phoneMobile,
+        fee:   tier.amount,
+        categoryLabel: tier.label,
       });
+      if (!bill.success) {
+        return res.status(502).json({ error: 'Failed to create payment link', detail: bill.error });
+      }
       billId  = bill.billId;
       billUrl = bill.billUrl;
     }
 
-    const participant = {
+    const registration = {
       id,
-      titlePrefix:  b.titlePrefix?.trim()  || '',
-      name:         b.name.trim(),
-      gender:       b.gender               || null,
-      dob:          b.dob                  || null,
-      ic:           b.ic?.trim()           || null,
-      passport:     b.passport?.trim()     || null,
-      email,
-      phone:        b.phone.trim(),
-      officePhone:  b.officePhone?.trim()  || null,
-      org:          b.org?.trim()          || null,
-      cat:          b.cat,
-      fee,
-      diet:         b.diet                 || 'Standard',
-      notes,
-      paid:         fee === 0,
-      paidAt:       fee === 0 ? now : null,
+      regMode:       b.regMode,
+      packageType:   b.packageType,
+      membership:    b.membership,
+      tierKey:       tier.tierKey,
+      categoryLabel: tier.label,
+      paxCount:      tier.pax,
+      totalAmount:   tier.amount,
+      paymentMethod: b.paymentMethod,
+      paid:          false,
       billId,
       billUrl,
-      consentTnc:   Boolean(b.consentTnc),
-      consentPdpa:  Boolean(b.consentPdpa),
+      receiptData:     req.file ? req.file.buffer.toString('base64') : null,
+      receiptMime:     req.file ? req.file.mimetype : null,
+      receiptFilename: req.file ? req.file.originalname.slice(0, 250) : null,
+      receiptStatus: b.paymentMethod === 'MANUAL_RECEIPT' ? 'PENDING' : null,
+      consentTnc:    true,
+      consentPdpa:   true,
     };
 
-    // 5. Save
-    await db.insert(participant);
+    // 7. Save (transactional)
+    const saved = await db.createRegistration(registration, attendees);
 
-    // 6. Emails — fire-and-forget
-    mailer.sendRegistrationConfirmation(participant)
+    // 8. Confirmation email — fire-and-forget
+    mailer.sendRegistrationConfirmation(saved, saved.attendees[0])
       .catch(e => console.error('[REGISTER] Confirmation email failed:', e.message));
 
-    if (fee === 0) {
-      mailer.sendPaymentConfirmedWithQR(participant)
-        .catch(e => console.error('[REGISTER] QR email failed:', e.message));
-    }
-
-    // 7. Respond
+    // 9. Respond
     return res.status(201).json({
       success: true,
       id,
-      name:    participant.name,
-      email,
-      cat:     participant.cat,
-      fee,
-      paid:    participant.paid,
-      billUrl: participant.billUrl,
-      message: fee > 0
-        ? 'Registered. BillPlz payment link sent to your email.'
-        : 'Registered. QR code will be emailed shortly.',
+      categoryLabel: tier.label,
+      totalAmount:   tier.amount,
+      paymentMethod: b.paymentMethod,
+      billUrl,
+      message: b.paymentMethod === 'BILLPLZ'
+        ? 'Registered. Redirecting to BillPlz for payment.'
+        : 'Registered. Your receipt is pending manual verification.',
     });
 
   } catch (err) {
     console.error('[REGISTER]', err);
+    if (err.message?.includes('Invalid package') || err.message?.includes('Invalid pricing')) {
+      return res.status(400).json({ error: err.message });
+    }
     return res.status(500).json({ error: 'Server error', detail: err.message });
   }
 });
 
-module.exports = router; // <-- Make sure this is present
-
+module.exports = router;

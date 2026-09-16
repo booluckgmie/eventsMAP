@@ -8,14 +8,15 @@ const ev = require('../event-config');
 router.get('/', async (req, res) => {
   try {
     res.json({
-      name: ev.name,
-      short: ev.short,
-      date: ev.date,
-      time: ev.time,
-      venue: ev.venue,
-      email: ev.email,
+      name:     ev.name,
+      shortName: ev.shortName,
+      date:     ev.date,
+      time:     ev.time,
+      venue:    ev.venue,
+      email:    ev.email,
       capacity: ev.capacity,
-      fees: ev.fees,
+      pricing:  ev.pricing,
+      bank:     ev.bank,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

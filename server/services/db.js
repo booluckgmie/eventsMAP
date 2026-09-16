@@ -1,10 +1,10 @@
 // server/services/db.js
-// MySQL connection pool + full CRUD layer.
-// All functions are async — swap pool driver without touching routes.
+// MySQL connection pool + full CRUD layer for registrations + attendees.
 'use strict';
 
 require('dotenv').config();
 const mysql = require('mysql2/promise');
+const crypto = require('crypto');
 
 // ── Pool (singleton) ──────────────────────────────────────────
 let _pool = null;
@@ -32,166 +32,266 @@ async function query(sql, params = []) {
   return rows;
 }
 
-// ── Row mapper: snake_case DB → camelCase JS ──────────────────
-function row(r) {
+function genQrHash(regId, seed) {
+  return crypto.createHash('sha256').update(`${regId}-${seed}-${Date.now()}-${Math.random()}`).digest('hex').slice(0, 24);
+}
+
+// ── Row mappers: snake_case DB → camelCase JS ──────────────────
+function attendeeRow(r) {
   if (!r) return null;
   return {
-    id:           r.id,
-    titlePrefix:  r.title_prefix  || '',
-    name:         r.name,
-    gender:       r.gender        || null,
-    dob:          r.dob ? new Date(r.dob).toISOString().slice(0, 10) : null,
-    ic:           r.ic            || null,
-    passport:     r.passport      || null,
-    email:        r.email,
-    phone:        r.phone,
-    officePhone:  r.office_phone  || null,
-    org:          r.org           || null,
-    cat:          r.cat,
-    fee:          Number(r.fee),
-    diet:         r.diet          || 'Standard',
-    notes:        r.notes         || null,
-    paid:         Boolean(r.paid),
-    paidAt:       r.paid_at  ? new Date(r.paid_at).toISOString()  : null,
-    billId:       r.bill_id  || null,
-    billUrl:      r.bill_url || null,
-    consentTnc:   Boolean(r.consent_tnc),
-    consentPdpa:  Boolean(r.consent_pdpa),
-    checkin:      Boolean(r.checkin),
-    ciMode:       r.ci_mode  || null,
-    ciTime:       r.ci_time  || null,
-    ciAt:         r.ci_at ? new Date(r.ci_at).toISOString() : null,
-    registeredAt: r.registered_at ? new Date(r.registered_at).toISOString() : new Date().toISOString(),
-    updatedAt:    r.updated_at    ? new Date(r.updated_at).toISOString()    : null,
+    id:              r.id,
+    registrationId:  r.registration_id,
+    isPrimary:       Boolean(r.is_primary),
+    title:           r.title || '',
+    fullName:        r.full_name,
+    nricPassport:    r.nric_passport,
+    email:           r.email,
+    phoneMobile:     r.phone_mobile || null,
+    phoneOffice:     r.phone_office || null,
+    institution:     r.institution || null,
+    addressPractice: r.address_practice || null,
+    mdcNo:           r.mdc_no || null,
+    foodPreference:  r.food_preference || 'Non-vegetarian',
+    qrHash:          r.qr_hash,
+    checkedIn:       Boolean(r.checked_in),
+    ciMode:          r.ci_mode || null,
+    ciAt:            r.ci_at ? new Date(r.ci_at).toISOString() : null,
+    createdAt:       r.created_at ? new Date(r.created_at).toISOString() : null,
   };
 }
 
-// ── INSERT ────────────────────────────────────────────────────
-async function insert(p) {
-  await query(`
-    INSERT INTO registrations (
-      id, title_prefix, name, gender, dob, ic, passport,
-      email, phone, office_phone, org,
-      cat, fee, diet, notes,
-      paid, paid_at, bill_id, bill_url,
-      consent_tnc, consent_pdpa,
-      checkin, registered_at, updated_at
-    ) VALUES (
-      ?,?,?,?,?,?,?, ?,?,?,?, ?,?,?,?, ?,?,?,?, ?,?, ?, NOW(),NOW()
-    )`,
-    [
-      p.id, p.titlePrefix||'', p.name, p.gender||null, p.dob||null, p.ic||null, p.passport||null,
-      p.email, p.phone, p.officePhone||null, p.org||null,
-      p.cat, p.fee, p.diet||'Standard', p.notes||null,
-      p.paid?1:0, p.paidAt||null, p.billId||null, p.billUrl||null,
-      p.consentTnc?1:0, p.consentPdpa?1:0,
-      0,
-    ]
-  );
-  return findById(p.id);
+function registrationRow(r) {
+  if (!r) return null;
+  return {
+    id:             r.id,
+    regMode:        r.reg_mode,
+    packageType:    r.package_type,
+    membership:     r.membership,
+    tierKey:        r.tier_key,
+    categoryLabel:  r.category_label,
+    paxCount:       r.pax_count,
+    totalAmount:    Number(r.total_amount),
+    paymentMethod:  r.payment_method,
+    paid:           Boolean(r.paid),
+    paidAt:         r.paid_at ? new Date(r.paid_at).toISOString() : null,
+    billId:         r.bill_id || null,
+    billUrl:        r.bill_url || null,
+    receiptMime:      r.receipt_mime || null,
+    receiptFilename:  r.receipt_filename || null,
+    hasReceipt:       Boolean(r.receipt_data),
+    receiptStatus:  r.receipt_status || null,
+    consentTnc:     Boolean(r.consent_tnc),
+    consentPdpa:    Boolean(r.consent_pdpa),
+    registeredAt:   r.registered_at ? new Date(r.registered_at).toISOString() : null,
+    updatedAt:      r.updated_at ? new Date(r.updated_at).toISOString() : null,
+  };
 }
 
-// ── FIND ALL ──────────────────────────────────────────────────
-async function findAll(filter = {}) {
+// ── CREATE: registration + attendees (transactional) ───────────
+async function createRegistration(reg, attendees) {
+  const pool = getPool();
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    await conn.execute(`
+      INSERT INTO registrations (
+        id, reg_mode, package_type, membership, tier_key, category_label,
+        pax_count, total_amount, payment_method,
+        paid, paid_at, bill_id, bill_url, receipt_data, receipt_mime, receipt_filename, receipt_status,
+        consent_tnc, consent_pdpa, registered_at, updated_at
+      ) VALUES (
+        ?,?,?,?,?,?, ?,?,?, ?,?,?,?,?,?,?,?, ?,?, NOW(),NOW()
+      )`,
+      [
+        reg.id, reg.regMode, reg.packageType, reg.membership, reg.tierKey, reg.categoryLabel,
+        reg.paxCount, reg.totalAmount, reg.paymentMethod,
+        reg.paid ? 1 : 0, reg.paidAt || null, reg.billId || null, reg.billUrl || null,
+        reg.receiptData || null, reg.receiptMime || null, reg.receiptFilename || null, reg.receiptStatus || null,
+        reg.consentTnc ? 1 : 0, reg.consentPdpa ? 1 : 0,
+      ]
+    );
+
+    for (let i = 0; i < attendees.length; i++) {
+      const a = attendees[i];
+      const qrHash = genQrHash(reg.id, i);
+      await conn.execute(`
+        INSERT INTO attendees (
+          registration_id, is_primary, title, full_name, nric_passport, email,
+          phone_mobile, phone_office, institution, address_practice, mdc_no,
+          food_preference, qr_hash, checked_in, created_at
+        ) VALUES (
+          ?,?,?,?,?,?, ?,?,?,?,?, ?,?,0, NOW()
+        )`,
+        [
+          reg.id, i === 0 ? 1 : 0, a.title || '', a.fullName, a.nricPassport, a.email,
+          a.phoneMobile || null, a.phoneOffice || null, a.institution || null,
+          a.addressPractice || null, a.mdcNo || null, a.foodPreference || 'Non-vegetarian',
+          qrHash,
+        ]
+      );
+    }
+
+    await conn.commit();
+    return findRegistrationById(reg.id);
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+}
+
+// ── FIND registration by id (with attendees) ────────────────────
+async function findRegistrationById(id) {
+  const regs = await query('SELECT * FROM registrations WHERE id = ? LIMIT 1', [id]);
+  if (!regs.length) return null;
+  const attendees = await query('SELECT * FROM attendees WHERE registration_id = ? ORDER BY id ASC', [id]);
+  return { ...registrationRow(regs[0]), attendees: attendees.map(attendeeRow) };
+}
+
+async function findRegistrationByBillId(billId) {
+  const regs = await query('SELECT * FROM registrations WHERE bill_id = ? LIMIT 1', [billId]);
+  if (!regs.length) return null;
+  return findRegistrationById(regs[0].id);
+}
+
+// ── FIND ALL registrations (with nested attendees) ───────────────
+async function findAllRegistrations(filter = {}) {
   let sql = 'SELECT * FROM registrations';
   const conds = [], vals = [];
-  if (filter.cat     !== undefined) { conds.push('cat = ?');     vals.push(filter.cat); }
-  if (filter.paid    !== undefined) { conds.push('paid = ?');    vals.push(filter.paid    ? 1 : 0); }
-  if (filter.checkin !== undefined) { conds.push('checkin = ?'); vals.push(filter.checkin ? 1 : 0); }
+  if (filter.paid          !== undefined) { conds.push('paid = ?');           vals.push(filter.paid ? 1 : 0); }
+  if (filter.packageType   !== undefined) { conds.push('package_type = ?');   vals.push(filter.packageType); }
+  if (filter.receiptStatus !== undefined) { conds.push('receipt_status = ?'); vals.push(filter.receiptStatus); }
   if (conds.length) sql += ' WHERE ' + conds.join(' AND ');
   sql += ' ORDER BY registered_at DESC';
-  return (await query(sql, vals)).map(row);
-}
 
-// ── FIND BY ID ────────────────────────────────────────────────
-async function findById(id) {
-  const rows = await query(
-    'SELECT * FROM registrations WHERE id = ? LIMIT 1',
-    [id.toUpperCase()]
+  const regs = await query(sql, vals);
+  if (!regs.length) return [];
+
+  const ids = regs.map(r => r.id);
+  const placeholders = ids.map(() => '?').join(',');
+  const attendees = await query(
+    `SELECT * FROM attendees WHERE registration_id IN (${placeholders}) ORDER BY id ASC`,
+    ids
   );
-  return row(rows[0]) || null;
+  const byReg = {};
+  attendees.forEach(a => {
+    (byReg[a.registration_id] = byReg[a.registration_id] || []).push(attendeeRow(a));
+  });
+
+  return regs.map(r => ({ ...registrationRow(r), attendees: byReg[r.id] || [] }));
 }
 
-// ── FIND BY FIELD (whitelisted) ───────────────────────────────
-const FIELD_COL = { email:'email', billId:'bill_id', phone:'phone', ic:'ic' };
-
-async function findBy(field, value) {
-  const col = FIELD_COL[field];
-  if (!col) throw new Error(`findBy: unsupported field "${field}"`);
-  const rows = await query(
-    `SELECT * FROM registrations WHERE ${col} = ? LIMIT 1`, [value]
-  );
-  return row(rows[0]) || null;
-}
-
-// ── UPDATE ────────────────────────────────────────────────────
-const COL = {
-  titlePrefix:'title_prefix', name:'name', gender:'gender', dob:'dob',
-  ic:'ic', passport:'passport', email:'email', phone:'phone', officePhone:'office_phone',
-  org:'org', cat:'cat', fee:'fee', diet:'diet', notes:'notes',
-  paid:'paid', paidAt:'paid_at', billId:'bill_id', billUrl:'bill_url',
-  consentTnc:'consent_tnc', consentPdpa:'consent_pdpa',
-  checkin:'checkin', ciMode:'ci_mode', ciTime:'ci_time', ciAt:'ci_at',
+// ── UPDATE registration ──────────────────────────────────────────
+const REG_COL = {
+  paid: 'paid', paidAt: 'paid_at', billId: 'bill_id', billUrl: 'bill_url',
+  receiptStatus: 'receipt_status',
 };
-const BOOL_FIELDS = new Set(['paid','checkin','consentTnc','consentPdpa']);
+const REG_BOOL_FIELDS = new Set(['paid']);
 
-async function update(id, fields) {
+async function updateRegistration(id, fields) {
   const set = ['updated_at = NOW()'], vals = [];
   for (const [k, v] of Object.entries(fields)) {
-    const col = COL[k];
+    const col = REG_COL[k];
     if (!col) continue;
     set.push(`${col} = ?`);
-    vals.push(BOOL_FIELDS.has(k) ? (v ? 1 : 0) : v);
+    vals.push(REG_BOOL_FIELDS.has(k) ? (v ? 1 : 0) : v);
   }
-  vals.push(id.toUpperCase());
+  vals.push(id);
   await query(`UPDATE registrations SET ${set.join(', ')} WHERE id = ?`, vals);
-  return findById(id);
+  return findRegistrationById(id);
 }
 
-// ── DELETE ────────────────────────────────────────────────────
-async function remove(id) {
-  const r = await query('DELETE FROM registrations WHERE id = ?', [id.toUpperCase()]);
+async function removeRegistration(id) {
+  const r = await query('DELETE FROM registrations WHERE id = ?', [id]);
   return r.affectedRows > 0;
 }
 
-// ── HELPERS ───────────────────────────────────────────────────
-async function count(filter = {}) {
-  return (await findAll(filter)).length;
+/** Fetch the raw receipt bytes for an admin download/preview — kept out of the normal row shape. */
+async function findReceiptData(id) {
+  const rows = await query(
+    'SELECT receipt_data, receipt_mime, receipt_filename FROM registrations WHERE id = ? LIMIT 1',
+    [id]
+  );
+  if (!rows.length || !rows[0].receipt_data) return null;
+  return {
+    data:     rows[0].receipt_data,
+    mime:     rows[0].receipt_mime,
+    filename: rows[0].receipt_filename,
+  };
 }
 
-async function nextId() {
-  const rows = await query("SELECT MAX(CAST(SUBSTRING(id, 4) AS UNSIGNED)) AS n FROM registrations WHERE id LIKE 'NX-%'");
-  return 'NX-' + String((Number(rows[0].n) || 0) + 1).padStart(3, '0');
+// ── ATTENDEE lookups ──────────────────────────────────────────────
+async function findAttendeeById(attendeeId) {
+  const rows = await query('SELECT * FROM attendees WHERE id = ? LIMIT 1', [attendeeId]);
+  return attendeeRow(rows[0]) || null;
+}
+
+async function findAttendeeByQr(qrHash) {
+  const rows = await query('SELECT * FROM attendees WHERE qr_hash = ? LIMIT 1', [qrHash]);
+  return attendeeRow(rows[0]) || null;
+}
+
+async function searchAttendees(term) {
+  const like = `%${term}%`;
+  const rows = await query(
+    `SELECT * FROM attendees
+     WHERE full_name LIKE ? OR nric_passport LIKE ? OR mdc_no LIKE ? OR registration_id LIKE ?
+     LIMIT 20`,
+    [like, like, like, like]
+  );
+  return rows.map(attendeeRow);
+}
+
+async function checkinAttendee(attendeeId, mode) {
+  const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  await query(
+    'UPDATE attendees SET checked_in = 1, ci_mode = ?, ci_at = ? WHERE id = ?',
+    [mode || 'Manual', now, attendeeId]
+  );
+  return findAttendeeById(attendeeId);
 }
 
 async function emailExists(email) {
-  const rows = await query(
-    'SELECT id FROM registrations WHERE email = ? LIMIT 1',
-    [email.toLowerCase()]
-  );
+  const rows = await query('SELECT id FROM attendees WHERE email = ? LIMIT 1', [email.toLowerCase()]);
   return rows.length > 0;
+}
+
+async function nextId() {
+  const rows = await query(
+    "SELECT MAX(CAST(SUBSTRING_INDEX(id, '-', -1) AS UNSIGNED)) AS n FROM registrations WHERE id LIKE 'MMID27-%'"
+  );
+  return 'MMID27-' + String((Number(rows[0].n) || 1000) + 1);
 }
 
 // ── STATS (dashboard) ─────────────────────────────────────────
 async function getStats() {
   const capacity = parseInt(process.env.EVENT_CAPACITY || '150', 10);
   const pool = getPool();
-  const [[tot]]  = await pool.execute('SELECT COUNT(*) AS n FROM registrations');
-  const [[pay]]  = await pool.execute('SELECT COUNT(*) AS n, COALESCE(SUM(fee),0) AS rev FROM registrations WHERE paid = 1');
-  const [[pend]] = await pool.execute('SELECT COUNT(*) AS n FROM registrations WHERE paid = 0');
-  const [[ci]]   = await pool.execute('SELECT COUNT(*) AS n FROM registrations WHERE checkin = 1');
-  const cats     = await query('SELECT cat, COUNT(*) AS n FROM registrations GROUP BY cat ORDER BY n DESC');
-  const byCategory = {};
-  cats.forEach(c => { byCategory[c.cat] = Number(c.n); });
-  const total = Number(tot.n);
+
+  const [[regTot]]   = await pool.execute('SELECT COUNT(*) AS n FROM registrations');
+  const [[attTot]]   = await pool.execute('SELECT COUNT(*) AS n FROM attendees');
+  const [[paidAgg]]  = await pool.execute('SELECT COUNT(*) AS n, COALESCE(SUM(total_amount),0) AS rev FROM registrations WHERE paid = 1');
+  const [[pendAgg]]  = await pool.execute("SELECT COUNT(*) AS n FROM registrations WHERE receipt_status = 'PENDING'");
+  const [[ciAgg]]    = await pool.execute('SELECT COUNT(*) AS n FROM attendees WHERE checked_in = 1');
+  const pkgs = await query('SELECT package_type, COUNT(*) AS n FROM registrations GROUP BY package_type');
+
+  const byPackage = {};
+  pkgs.forEach(p => { byPackage[p.package_type] = Number(p.n); });
+
+  const totalAttendees = Number(attTot.n);
   return {
-    total, capacity,
-    seatsLeft:  Math.max(0, capacity - total),
-    paid:       Number(pay.n),
-    revenue:    Number(pay.rev),
-    pending:    Number(pend.n),
-    checkedIn:  Number(ci.n),
-    byCategory,
+    totalRegistrations: Number(regTot.n),
+    totalAttendees,
+    capacity,
+    seatsLeft:   Math.max(0, capacity - totalAttendees),
+    paid:        Number(paidAgg.n),
+    revenue:     Number(paidAgg.rev),
+    pending:     Number(pendAgg.n),
+    checkedIn:   Number(ciAgg.n),
+    byPackage,
   };
 }
 
@@ -209,8 +309,9 @@ async function testConnection() {
 }
 
 module.exports = {
-  insert, findAll, getAll: findAll, findById, findBy,
-  update, remove, count,
-  nextId, emailExists, getStats,
-  testConnection, getPool,
+  getPool, testConnection,
+  createRegistration, findRegistrationById, findRegistrationByBillId,
+  findAllRegistrations, updateRegistration, removeRegistration, findReceiptData,
+  findAttendeeById, findAttendeeByQr, searchAttendees, checkinAttendee,
+  emailExists, nextId, getStats,
 };
