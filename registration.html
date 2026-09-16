@@ -119,7 +119,7 @@
                         </h2>
                         <p class="text-xs text-slate-500">Single pax registration is standard. Optional group packages of 5 pax available.</p>
                     </div>
-                    <span class="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
+                    <span class="text-[11px] text-amber-700 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
                         <i class="fa-solid fa-triangle-exclamation"></i> Non-transferable & No Refund Policy
                     </span>
                 </div>
@@ -157,7 +157,7 @@
                             <label class="cursor-pointer">
                                 <input type="radio" name="reg_mode" value="GROUP" class="peer sr-only">
                                 <div class="p-3.5 rounded-xl border border-slate-300 bg-white peer-checked:border-amber-500 peer-checked:bg-amber-500/10 transition-all flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0"><i class="fa-solid fa-users"></i></div>
+                                    <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0"><i class="fa-solid fa-users"></i></div>
                                     <div><span class="block text-xs font-bold text-slate-900">Group Registration (5 Pax)</span><span class="text-[10px] text-slate-500 block">Group package rate for 5 delegates</span></div>
                                 </div>
                             </label>
@@ -252,8 +252,8 @@
                     <!-- Group members -->
                     <div id="group-attendees-container" class="hidden space-y-4 pt-4 border-t border-amber-500/30 bg-amber-500/5 p-4 rounded-2xl">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-users"></i> Additional Group Members (4 Extra Delegates)</h3>
-                            <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">Group Registration</span>
+                            <h3 class="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-users"></i> Additional Group Members (4 Extra Delegates)</h3>
+                            <span class="text-[10px] bg-amber-500/20 text-amber-700 px-2 py-0.5 rounded">Group Registration</span>
                         </div>
                         <p class="text-xs text-slate-500">Please provide details for the other 4 delegates in this group booking:</p>
                         <div id="group-members-list" class="space-y-4"></div>
@@ -437,7 +437,7 @@
                 for (let i = 2; i <= config.pax; i++) {
                     membersList.insertAdjacentHTML('beforeend', `
                         <div class="p-3 bg-white rounded-xl border border-slate-300/70 space-y-3">
-                            <span class="text-[11px] font-bold text-amber-300 block">Delegate #${i} Details</span>
+                            <span class="text-[11px] font-bold text-amber-700 block">Delegate #${i} Details</span>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                                 <div><label class="block text-[10px] text-slate-500 mb-0.5">Full Name *</label>
                                     <input type="text" name="group_fullname_${i}" required placeholder="BLOCK LETTERS" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 uppercase outline-none"></div>

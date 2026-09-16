@@ -1,37 +1,30 @@
 // server/services/db.js
-// Postgres (Supabase) connection pool + full CRUD layer for registrations + attendees.
+// Supabase (PostgREST) client + full CRUD layer for registrations + attendees.
 'use strict';
 
 require('dotenv').config();
-const { Pool } = require('pg');
+const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
 
-// ── Pool (singleton) ──────────────────────────────────────────
-let _pool = null;
+// ── Client (singleton) ───────────────────────────────────────────
+let _client = null;
 
-function getPool() {
-  if (_pool) return _pool;
+function getClient() {
+  if (_client) return _client;
 
-  const useSsl = process.env.DB_SSL !== 'false'; // Supabase requires SSL; default on
-  const sslOpt = useSsl ? { rejectUnauthorized: false } : false;
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) {
+    throw new Error('[DB] Missing environment variable: SUPABASE_URL / SUPABASE_SECRET_KEY');
+  }
 
-  _pool = process.env.DATABASE_URL
-    ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: sslOpt, max: 10 })
-    : new Pool({
-        host:     process.env.DB_HOST     || 'localhost',
-        port:     parseInt(process.env.DB_PORT || '5432', 10),
-        user:     process.env.DB_USER     || 'postgres',
-        password: process.env.DB_PASSWORD || 'postgres',
-        database: process.env.DB_NAME     || 'postgres',
-        ssl:      sslOpt,
-        max:      10,
-      });
-  return _pool;
+  _client = createClient(url, key, { auth: { persistSession: false } });
+  return _client;
 }
 
-async function query(sql, params = []) {
-  const { rows } = await getPool().query(sql, params);
-  return rows;
+function unwrap({ data, error }) {
+  if (error) throw new Error(`[DB] ${error.message}`);
+  return data;
 }
 
 function genQrHash(regId, seed) {
@@ -90,92 +83,93 @@ function registrationRow(r) {
   };
 }
 
-// ── CREATE: registration + attendees (transactional) ───────────
+// ── CREATE: registration + attendees ────────────────────────────
+// PostgREST has no cross-table transaction; insert the registration first,
+// then the attendees, and delete the registration on failure to avoid orphans.
 async function createRegistration(reg, attendees) {
-  const client = await getPool().connect();
+  const db = getClient();
+
+  unwrap(await db.from('registrations').insert({
+    id: reg.id,
+    reg_mode: reg.regMode,
+    package_type: reg.packageType,
+    membership: reg.membership,
+    tier_key: reg.tierKey,
+    category_label: reg.categoryLabel,
+    pax_count: reg.paxCount,
+    total_amount: reg.totalAmount,
+    payment_method: reg.paymentMethod,
+    paid: reg.paid || false,
+    paid_at: reg.paidAt || null,
+    bill_id: reg.billId || null,
+    bill_url: reg.billUrl || null,
+    receipt_data: reg.receiptData || null,
+    receipt_mime: reg.receiptMime || null,
+    receipt_filename: reg.receiptFilename || null,
+    receipt_status: reg.receiptStatus || null,
+    consent_tnc: reg.consentTnc || false,
+    consent_pdpa: reg.consentPdpa || false,
+  }));
+
   try {
-    await client.query('BEGIN');
-
-    await client.query(`
-      INSERT INTO registrations (
-        id, reg_mode, package_type, membership, tier_key, category_label,
-        pax_count, total_amount, payment_method,
-        paid, paid_at, bill_id, bill_url, receipt_data, receipt_mime, receipt_filename, receipt_status,
-        consent_tnc, consent_pdpa, registered_at, updated_at
-      ) VALUES (
-        $1,$2,$3,$4,$5,$6, $7,$8,$9, $10,$11,$12,$13,$14,$15,$16,$17, $18,$19, NOW(),NOW()
-      )`,
-      [
-        reg.id, reg.regMode, reg.packageType, reg.membership, reg.tierKey, reg.categoryLabel,
-        reg.paxCount, reg.totalAmount, reg.paymentMethod,
-        reg.paid || false, reg.paidAt || null, reg.billId || null, reg.billUrl || null,
-        reg.receiptData || null, reg.receiptMime || null, reg.receiptFilename || null, reg.receiptStatus || null,
-        reg.consentTnc || false, reg.consentPdpa || false,
-      ]
-    );
-
-    for (let i = 0; i < attendees.length; i++) {
-      const a = attendees[i];
-      const qrHash = genQrHash(reg.id, i);
-      await client.query(`
-        INSERT INTO attendees (
-          registration_id, is_primary, title, full_name, nric_passport, email,
-          phone_mobile, phone_office, institution, address_practice, mdc_no,
-          food_preference, qr_hash, checked_in, created_at
-        ) VALUES (
-          $1,$2,$3,$4,$5,$6, $7,$8,$9,$10,$11, $12,$13,false, NOW()
-        )`,
-        [
-          reg.id, i === 0, a.title || '', a.fullName, a.nricPassport, a.email,
-          a.phoneMobile || null, a.phoneOffice || null, a.institution || null,
-          a.addressPractice || null, a.mdcNo || null, a.foodPreference || 'Non-vegetarian',
-          qrHash,
-        ]
-      );
-    }
-
-    await client.query('COMMIT');
-    return findRegistrationById(reg.id);
+    const attendeeRows = attendees.map((a, i) => ({
+      registration_id: reg.id,
+      is_primary: i === 0,
+      title: a.title || '',
+      full_name: a.fullName,
+      nric_passport: a.nricPassport,
+      email: a.email,
+      phone_mobile: a.phoneMobile || null,
+      phone_office: a.phoneOffice || null,
+      institution: a.institution || null,
+      address_practice: a.addressPractice || null,
+      mdc_no: a.mdcNo || null,
+      food_preference: a.foodPreference || 'Non-vegetarian',
+      qr_hash: genQrHash(reg.id, i),
+      checked_in: false,
+    }));
+    unwrap(await db.from('attendees').insert(attendeeRows));
   } catch (err) {
-    await client.query('ROLLBACK');
+    await db.from('registrations').delete().eq('id', reg.id);
     throw err;
-  } finally {
-    client.release();
   }
+
+  return findRegistrationById(reg.id);
 }
 
 // ── FIND registration by id (with attendees) ────────────────────
 async function findRegistrationById(id) {
-  const regs = await query('SELECT * FROM registrations WHERE id = $1 LIMIT 1', [id]);
+  const db = getClient();
+  const regs = unwrap(await db.from('registrations').select('*').eq('id', id).limit(1));
   if (!regs.length) return null;
-  const attendees = await query('SELECT * FROM attendees WHERE registration_id = $1 ORDER BY id ASC', [id]);
+  const attendees = unwrap(
+    await db.from('attendees').select('*').eq('registration_id', id).order('id', { ascending: true })
+  );
   return { ...registrationRow(regs[0]), attendees: attendees.map(attendeeRow) };
 }
 
 async function findRegistrationByBillId(billId) {
-  const regs = await query('SELECT * FROM registrations WHERE bill_id = $1 LIMIT 1', [billId]);
+  const db = getClient();
+  const regs = unwrap(await db.from('registrations').select('id').eq('bill_id', billId).limit(1));
   if (!regs.length) return null;
   return findRegistrationById(regs[0].id);
 }
 
 // ── FIND ALL registrations (with nested attendees) ───────────────
 async function findAllRegistrations(filter = {}) {
-  let sql = 'SELECT * FROM registrations';
-  const conds = [], vals = [];
-  if (filter.paid          !== undefined) { vals.push(filter.paid); conds.push(`paid = $${vals.length}`); }
-  if (filter.packageType   !== undefined) { vals.push(filter.packageType); conds.push(`package_type = $${vals.length}`); }
-  if (filter.receiptStatus !== undefined) { vals.push(filter.receiptStatus); conds.push(`receipt_status = $${vals.length}`); }
-  if (conds.length) sql += ' WHERE ' + conds.join(' AND ');
-  sql += ' ORDER BY registered_at DESC';
+  const db = getClient();
+  let q = db.from('registrations').select('*');
+  if (filter.paid          !== undefined) q = q.eq('paid', filter.paid);
+  if (filter.packageType   !== undefined) q = q.eq('package_type', filter.packageType);
+  if (filter.receiptStatus !== undefined) q = q.eq('receipt_status', filter.receiptStatus);
+  q = q.order('registered_at', { ascending: false });
 
-  const regs = await query(sql, vals);
+  const regs = unwrap(await q);
   if (!regs.length) return [];
 
   const ids = regs.map(r => r.id);
-  const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
-  const attendees = await query(
-    `SELECT * FROM attendees WHERE registration_id IN (${placeholders}) ORDER BY id ASC`,
-    ids
+  const attendees = unwrap(
+    await db.from('attendees').select('*').in('registration_id', ids).order('id', { ascending: true })
   );
   const byReg = {};
   attendees.forEach(a => {
@@ -192,29 +186,28 @@ const REG_COL = {
 };
 
 async function updateRegistration(id, fields) {
-  const set = [], vals = [];
+  const db = getClient();
+  const patch = { updated_at: new Date().toISOString() };
   for (const [k, v] of Object.entries(fields)) {
     const col = REG_COL[k];
     if (!col) continue;
-    vals.push(v);
-    set.push(`${col} = $${vals.length}`);
+    patch[col] = v;
   }
-  set.push('updated_at = NOW()');
-  vals.push(id);
-  await query(`UPDATE registrations SET ${set.join(', ')} WHERE id = $${vals.length}`, vals);
+  unwrap(await db.from('registrations').update(patch).eq('id', id));
   return findRegistrationById(id);
 }
 
 async function removeRegistration(id) {
-  const { rowCount } = await getPool().query('DELETE FROM registrations WHERE id = $1', [id]);
-  return rowCount > 0;
+  const db = getClient();
+  const data = unwrap(await db.from('registrations').delete().eq('id', id).select('id'));
+  return data.length > 0;
 }
 
 /** Fetch the raw receipt bytes for an admin download/preview — kept out of the normal row shape. */
 async function findReceiptData(id) {
-  const rows = await query(
-    'SELECT receipt_data, receipt_mime, receipt_filename FROM registrations WHERE id = $1 LIMIT 1',
-    [id]
+  const db = getClient();
+  const rows = unwrap(
+    await db.from('registrations').select('receipt_data, receipt_mime, receipt_filename').eq('id', id).limit(1)
   );
   if (!rows.length || !rows[0].receipt_data) return null;
   return {
@@ -226,72 +219,93 @@ async function findReceiptData(id) {
 
 // ── ATTENDEE lookups ──────────────────────────────────────────────
 async function findAttendeeById(attendeeId) {
-  const rows = await query('SELECT * FROM attendees WHERE id = $1 LIMIT 1', [attendeeId]);
+  const db = getClient();
+  const rows = unwrap(await db.from('attendees').select('*').eq('id', attendeeId).limit(1));
   return attendeeRow(rows[0]) || null;
 }
 
 async function findAttendeeByQr(qrHash) {
-  const rows = await query('SELECT * FROM attendees WHERE qr_hash = $1 LIMIT 1', [qrHash]);
+  const db = getClient();
+  const rows = unwrap(await db.from('attendees').select('*').eq('qr_hash', qrHash).limit(1));
   return attendeeRow(rows[0]) || null;
 }
 
 async function searchAttendees(term) {
+  const db = getClient();
   const like = `%${term}%`;
-  const rows = await query(
-    `SELECT * FROM attendees
-     WHERE full_name ILIKE $1 OR nric_passport ILIKE $1 OR mdc_no ILIKE $1 OR registration_id ILIKE $1
-     LIMIT 20`,
-    [like]
+  const rows = unwrap(
+    await db.from('attendees').select('*')
+      .or(`full_name.ilike.${like},nric_passport.ilike.${like},mdc_no.ilike.${like},registration_id.ilike.${like}`)
+      .limit(20)
   );
   return rows.map(attendeeRow);
 }
 
 async function checkinAttendee(attendeeId, mode) {
-  await query(
-    'UPDATE attendees SET checked_in = true, ci_mode = $1, ci_at = NOW() WHERE id = $2',
-    [mode || 'Manual', attendeeId]
+  const db = getClient();
+  unwrap(
+    await db.from('attendees')
+      .update({ checked_in: true, ci_mode: mode || 'Manual', ci_at: new Date().toISOString() })
+      .eq('id', attendeeId)
   );
   return findAttendeeById(attendeeId);
 }
 
 async function emailExists(email) {
-  const rows = await query('SELECT id FROM attendees WHERE email = $1 LIMIT 1', [email.toLowerCase()]);
+  const db = getClient();
+  const rows = unwrap(await db.from('attendees').select('id').eq('email', email.toLowerCase()).limit(1));
   return rows.length > 0;
 }
 
 async function nextId() {
-  const rows = await query(
-    "SELECT MAX(split_part(id, '-', 2)::int) AS n FROM registrations WHERE id LIKE 'MMID27-%'"
-  );
-  return 'MMID27-' + String((Number(rows[0].n) || 1000) + 1);
+  const db = getClient();
+  const rows = unwrap(await db.from('registrations').select('id').ilike('id', 'MMID27-%'));
+  const max = rows.reduce((m, r) => {
+    const n = parseInt(String(r.id).split('-')[1], 10);
+    return Number.isFinite(n) && n > m ? n : m;
+  }, 1000);
+  return 'MMID27-' + (max + 1);
 }
 
 // ── STATS (dashboard) ─────────────────────────────────────────
 async function getStats() {
+  const db = getClient();
   const capacity = parseInt(process.env.EVENT_CAPACITY || '150', 10);
 
-  const [[regTot], [attTot], [paidAgg], [pendAgg], [ciAgg], pkgs] = await Promise.all([
-    query('SELECT COUNT(*) AS n FROM registrations'),
-    query('SELECT COUNT(*) AS n FROM attendees'),
-    query('SELECT COUNT(*) AS n, COALESCE(SUM(total_amount),0) AS rev FROM registrations WHERE paid = true'),
-    query("SELECT COUNT(*) AS n FROM registrations WHERE receipt_status = 'PENDING'"),
-    query('SELECT COUNT(*) AS n FROM attendees WHERE checked_in = true'),
-    query('SELECT package_type, COUNT(*) AS n FROM registrations GROUP BY package_type'),
+  const [
+    { count: totalRegistrations },
+    { count: totalAttendees },
+    paidRows,
+    { count: pending },
+    { count: checkedIn },
+    pkgRows,
+  ] = await Promise.all([
+    db.from('registrations').select('*', { count: 'exact', head: true }),
+    db.from('attendees').select('*', { count: 'exact', head: true }),
+    db.from('registrations').select('total_amount').eq('paid', true),
+    db.from('registrations').select('*', { count: 'exact', head: true }).eq('receipt_status', 'PENDING'),
+    db.from('attendees').select('*', { count: 'exact', head: true }).eq('checked_in', true),
+    db.from('registrations').select('package_type'),
   ]);
 
-  const byPackage = {};
-  pkgs.forEach(p => { byPackage[p.package_type] = Number(p.n); });
+  const paid = unwrap(paidRows);
+  const revenue = paid.reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
 
-  const totalAttendees = Number(attTot.n);
+  const byPackage = {};
+  unwrap(pkgRows).forEach(p => {
+    byPackage[p.package_type] = (byPackage[p.package_type] || 0) + 1;
+  });
+
+  const attendeesTotal = totalAttendees || 0;
   return {
-    totalRegistrations: Number(regTot.n),
-    totalAttendees,
+    totalRegistrations: totalRegistrations || 0,
+    totalAttendees: attendeesTotal,
     capacity,
-    seatsLeft:   Math.max(0, capacity - totalAttendees),
-    paid:        Number(paidAgg.n),
-    revenue:     Number(paidAgg.rev),
-    pending:     Number(pendAgg.n),
-    checkedIn:   Number(ciAgg.n),
+    seatsLeft:   Math.max(0, capacity - attendeesTotal),
+    paid:        paid.length,
+    revenue,
+    pending:     pending || 0,
+    checkedIn:   checkedIn || 0,
     byPackage,
   };
 }
@@ -299,17 +313,19 @@ async function getStats() {
 // ── STARTUP TEST ──────────────────────────────────────────────
 async function testConnection() {
   try {
-    const rows = await query('SELECT current_database() AS db');
-    console.log(`[DB] ✓ Postgres connected — ${rows[0].db}`);
+    const db = getClient();
+    const { error } = await db.from('registrations').select('id', { count: 'exact', head: true });
+    if (error) throw new Error(error.message);
+    console.log('[DB] ✓ Supabase connected');
     return true;
   } catch (err) {
-    console.error('[DB] ✗ Postgres connection failed:', err.message);
+    console.error('[DB] ✗ Supabase connection failed:', err.message);
     return false;
   }
 }
 
 module.exports = {
-  getPool, testConnection,
+  getClient, testConnection,
   createRegistration, findRegistrationById, findRegistrationByBillId,
   findAllRegistrations, updateRegistration, removeRegistration, findReceiptData,
   findAttendeeById, findAttendeeByQr, searchAttendees, checkinAttendee,
