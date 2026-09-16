@@ -14,7 +14,7 @@ const config = {
   date:      process.env.EVENT_DATE    || '18 - 19 January 2027',
   time:      process.env.EVENT_TIME    || '09:00 - 17:00 Daily',
   venue:     process.env.EVENT_VENUE   || 'The Dental Academy, Kuala Lumpur, Malaysia',
-  capacity:  parseInt(process.env.EVENT_CAPACITY || '150', 10),
+  capacity:  parseInt(process.env.EVENT_CAPACITY || '100', 10),
   email:     process.env.EVENT_EMAIL   || 'maprostho@gmail.com',
   baseUrl:   process.env.FRONTEND_URL  || 'https://events.maprostho.com.my',
 
