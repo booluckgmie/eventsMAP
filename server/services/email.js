@@ -27,10 +27,10 @@ async function verifyConnection() {
   try {
     await getTransport().verify();
     console.log('[EMAIL] ✓ SMTP OK:', process.env.GMAIL_USER);
-    return true;
+    return { ok: true };
   } catch (e) {
     console.error('[EMAIL] ✗ SMTP failed:', e.message);
-    return false;
+    return { ok: false, message: e.message, code: e.code, responseCode: e.responseCode, response: e.response };
   }
 }
 

@@ -210,8 +210,13 @@ router.post('/test-email', async (req, res) => {
   try {
     const { to } = req.body;
     if (!to) return res.status(400).json({ error: 'to email required' });
-    const ok = await mailer.verifyConnection();
-    if (!ok) return res.status(500).json({ error: 'SMTP failed', user: process.env.GMAIL_USER });
+    const result = await mailer.verifyConnection();
+    if (!result.ok) {
+      return res.status(500).json({
+        error: 'SMTP failed', user: process.env.GMAIL_USER,
+        detail: result.message, code: result.code, responseCode: result.responseCode,
+      });
+    }
 
     const tier = ev.getTier('LECTURE_ONLY', 'MAP_MEMBER', 'SINGLE');
     await mailer.sendTicketWithQR(

@@ -28,8 +28,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const cmds = {
   async verify() {
-    const ok = await mailer.verifyConnection();
-    console.log(ok ? '✅ SMTP OK' : '❌ SMTP failed — check .env credentials');
+    const result = await mailer.verifyConnection();
+    console.log(result.ok ? '✅ SMTP OK' : `❌ SMTP failed — ${result.message} (code: ${result.code})`);
   },
 
   async registration() {
