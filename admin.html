@@ -205,12 +205,17 @@
             return 'AWAITING_PAYMENT';
         }
 
-        function statusBadge(status) {
+        function statusBadge(status, billUrl) {
+            if (status === 'AWAITING_PAYMENT') {
+                const classes = 'px-2 py-0.5 rounded bg-slate-700/50 text-slate-600 border border-slate-600 text-[10px] font-bold';
+                return billUrl
+                    ? `<a href="${billUrl}" target="_blank" rel="noopener" class="${classes} hover:bg-slate-700/70 hover:text-slate-900 inline-flex items-center gap-1">AWAITING PAY <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>`
+                    : `<span class="${classes}">AWAITING PAY</span>`;
+            }
             const map = {
-                PAID:             '<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold"><i class="fa-solid fa-check mr-1"></i>PAID</span>',
-                PENDING:          '<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 border border-amber-500/20 text-[10px] font-bold"><i class="fa-solid fa-clock mr-1"></i>VERIFY</span>',
-                REJECTED:         '<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">REJECTED</span>',
-                AWAITING_PAYMENT: '<span class="px-2 py-0.5 rounded bg-slate-700/50 text-slate-600 border border-slate-600 text-[10px] font-bold">AWAITING PAY</span>',
+                PAID:     '<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold"><i class="fa-solid fa-check mr-1"></i>PAID</span>',
+                PENDING:  '<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 border border-amber-500/20 text-[10px] font-bold"><i class="fa-solid fa-clock mr-1"></i>VERIFY</span>',
+                REJECTED: '<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">REJECTED</span>',
             };
             return map[status] || status;
         }
@@ -262,7 +267,7 @@
                         <td class="py-3 px-4 text-center"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold text-[10px]">${reg.paxCount} pax</span></td>
                         <td class="py-3 px-4 font-bold text-slate-900">RM ${reg.totalAmount.toFixed(2)}</td>
                         <td class="py-3 px-4 text-xs font-sans">${methodBadge}</td>
-                        <td class="py-3 px-4">${statusBadge(status)}</td>
+                        <td class="py-3 px-4">${statusBadge(status, reg.billUrl)}</td>
                         <td class="py-3 px-4 text-right whitespace-nowrap">${actions}</td>
                     </tr>`);
             });
