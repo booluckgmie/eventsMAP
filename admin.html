@@ -107,6 +107,34 @@
                 <i class="fa-solid fa-folder-open text-3xl"></i><p class="text-xs">No registration records found matching the filters.</p>
             </div>
         </div>
+
+        <div class="glass-panel w-full max-w-xl p-4 rounded-2xl border border-slate-200 space-y-3">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><i class="fa-solid fa-circle-info"></i> Legend — Status & Actions</span>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold w-fit"><i class="fa-solid fa-check mr-1"></i>PAID</span>
+                <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 border border-amber-500/20 text-[10px] font-bold w-fit"><i class="fa-solid fa-clock mr-1"></i>VERIFY</span>
+                <span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold w-fit">REJECTED</span>
+                <span class="px-2 py-0.5 rounded bg-slate-700/50 text-slate-600 border border-slate-600 text-[10px] font-bold w-fit">AWAITING PAY</span>
+            </div>
+            <ul class="text-[11px] text-slate-500 space-y-1 font-sans">
+                <li><span class="font-semibold text-slate-700">PAID</span> — payment confirmed, tickets issued.</li>
+                <li><span class="font-semibold text-amber-700">VERIFY</span> — manual bank transfer receipt awaiting your review.</li>
+                <li><span class="font-semibold text-rose-400">REJECTED</span> — manual receipt was rejected.</li>
+                <li><span class="font-semibold text-slate-600">AWAITING PAY</span> — unpaid Billplz bill; click it to open the payment link in a new tab.</li>
+            </ul>
+            <div class="border-t border-slate-200 pt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-slate-500 font-sans">
+                <span class="px-2 py-1 bg-brand-500/20 text-brand-300 rounded text-[11px] font-sans font-semibold border border-brand-500/30 w-fit">Verify</span>
+                <span>confirms a Billplz payment and issues tickets.</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-slate-500 font-sans">
+                <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[11px] font-sans w-fit">Tickets</span>
+                <span>view delegates and issued QR tickets — always safe to click.</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] font-sans">
+                <span class="px-2 py-1 bg-rose-950/60 text-rose-300 rounded text-[11px] font-sans w-fit"><i class="fa-solid fa-trash"></i></span>
+                <span class="text-rose-500 font-semibold">permanently deletes the registration and all its attendees — cannot be undone.</span>
+            </div>
+        </div>
     </main>
 
     <!-- Receipt Review Modal -->
