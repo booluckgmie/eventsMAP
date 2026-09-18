@@ -525,6 +525,13 @@
                         foodPreference: document.querySelector(`select[name="group_food_${i}"]`)?.value || 'Non-vegetarian',
                     });
                 }
+                const incompleteDelegates = groupMembers
+                    .map((m, idx) => (!m.fullName || !m.nricPassport || !m.email) ? idx + 2 : null)
+                    .filter(n => n !== null);
+                if (incompleteDelegates.length) {
+                    alert(`Please fill in Full Name, NRIC/Passport and Email for Delegate #${incompleteDelegates.join(', #')} before submitting.`);
+                    return;
+                }
             }
 
             const fd = new FormData();
