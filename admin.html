@@ -363,7 +363,7 @@
                 <div class="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between gap-3">
                     <div>
                         <span class="font-bold text-slate-900 block">${a.title || ''} ${a.fullName}</span>
-                        <span class="text-[10px] text-slate-500 font-mono">${a.email} • ${a.nricPassport}</span>
+                        <span class="text-[10px] text-slate-500 font-mono">${a.email}${a.nricPassport ? ' • ' + a.nricPassport : ''}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         ${a.checkedIn
@@ -413,7 +413,7 @@
             REGISTRATIONS.forEach(reg => {
                 const status = deriveStatus(reg);
                 reg.attendees.forEach(a => {
-                    csv += `"${reg.id}","${a.fullName}","${a.nricPassport}","${a.email}","${a.phoneMobile || ''}","${a.mdcNo || ''}","${reg.packageType}",${reg.paxCount},${reg.totalAmount},"${reg.paymentMethod}","${status}","${a.checkedIn ? 'YES' : 'NO'}"\n`;
+                    csv += `"${reg.id}","${a.fullName}","${a.nricPassport || ''}","${a.email}","${a.phoneMobile || ''}","${a.mdcNo || ''}","${reg.packageType}",${reg.paxCount},${reg.totalAmount},"${reg.paymentMethod}","${status}","${a.checkedIn ? 'YES' : 'NO'}"\n`;
                 });
             });
             const blob = new Blob([csv], { type: 'text/csv' });

@@ -117,7 +117,7 @@ async function createRegistration(reg, attendees) {
       is_primary: i === 0,
       title: a.title || '',
       full_name: a.fullName,
-      nric_passport: a.nricPassport,
+      nric_passport: a.nricPassport || null,
       email: a.email,
       phone_mobile: a.phoneMobile || null,
       phone_office: a.phoneOffice || null,
