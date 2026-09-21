@@ -27,7 +27,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function validatePerson(p, label) {
   const errors = [];
   if (!p.fullName?.trim())                errors.push(`${label}: full name is required`);
-  if (!p.nricPassport?.trim())             errors.push(`${label}: NRIC/passport is required`);
   if (!EMAIL_RE.test(p.email || ''))       errors.push(`${label}: valid email is required`);
   return errors;
 }
@@ -97,7 +96,6 @@ router.post('/', upload.single('receipt'), async (req, res) => {
       {
         title:           b.primary.title?.trim()      || '',
         fullName:        b.primary.fullName.trim().toUpperCase(),
-        nricPassport:    b.primary.nricPassport.trim(),
         email:           primaryEmail,
         phoneMobile:     b.primary.phoneMobile?.trim() || null,
         phoneOffice:     b.primary.phoneOffice?.trim() || null,
@@ -109,7 +107,6 @@ router.post('/', upload.single('receipt'), async (req, res) => {
       ...groupMembers.map(g => ({
         title:           g.title?.trim() || '',
         fullName:        g.fullName.trim().toUpperCase(),
-        nricPassport:    g.nricPassport.trim(),
         email:           (g.email || '').trim().toLowerCase(),
         phoneMobile:     b.primary.phoneMobile?.trim() || null,
         phoneOffice:     null,

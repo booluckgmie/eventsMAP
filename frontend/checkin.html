@@ -180,7 +180,7 @@
             document.getElementById('pass-ref').textContent = registration.id;
             document.getElementById('pass-name').textContent = `${attendee.title || ''} ${attendee.fullName}`;
             document.getElementById('pass-institution').textContent = attendee.institution || 'Private Practice';
-            document.getElementById('pass-nric').textContent = attendee.nricPassport;
+            document.getElementById('pass-nric').textContent = attendee.nricPassport || 'N/A';
             document.getElementById('pass-mdc').textContent = attendee.mdcNo || 'N/A';
             document.getElementById('pass-package').textContent = registration.packageType === 'COMBO' ? 'Combo (2-Day)' : 'Lecture Only';
             document.getElementById('pass-food').textContent = attendee.foodPreference;

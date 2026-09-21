@@ -214,10 +214,6 @@
                                 <input type="text" id="reg-fullname" required placeholder="e.g. DR AHMAD FAUZI BIN ISMAIL" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 uppercase outline-none">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-600 mb-1">NRIC or Passport No. *</label>
-                                <input type="text" id="reg-nric" required placeholder="e.g. 880512-14-5533" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none">
-                            </div>
-                            <div>
                                 <label class="block text-xs font-medium text-slate-600 mb-1">Email Address *</label>
                                 <input type="email" id="reg-email" required placeholder="doctor@clinic.com" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none">
                             </div>
@@ -440,11 +436,9 @@
                     membersList.insertAdjacentHTML('beforeend', `
                         <div class="p-3 bg-white rounded-xl border border-slate-300/70 space-y-3">
                             <span class="text-[11px] font-bold text-amber-700 block">Delegate #${i} Details</span>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                 <div><label class="block text-[10px] text-slate-500 mb-0.5">Full Name *</label>
                                     <input type="text" name="group_fullname_${i}" required placeholder="BLOCK LETTERS" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 uppercase outline-none"></div>
-                                <div><label class="block text-[10px] text-slate-500 mb-0.5">NRIC / Passport *</label>
-                                    <input type="text" name="group_nric_${i}" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 outline-none"></div>
                                 <div><label class="block text-[10px] text-slate-500 mb-0.5">Email Address *</label>
                                     <input type="email" name="group_email_${i}" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 outline-none"></div>
                                 <div><label class="block text-[10px] text-slate-500 mb-0.5">MDC No. / Food</label>
@@ -502,7 +496,6 @@
             const primary = {
                 title: document.getElementById('reg-title').value,
                 fullName: document.getElementById('reg-fullname').value.trim(),
-                nricPassport: document.getElementById('reg-nric').value.trim(),
                 email: document.getElementById('reg-email').value.trim(),
                 phoneMobile: document.getElementById('reg-mobile').value.trim(),
                 phoneOffice: document.getElementById('reg-office').value.trim(),
@@ -518,17 +511,16 @@
                 for (let i = 2; i <= config.pax; i++) {
                     groupMembers.push({
                         fullName: document.querySelector(`input[name="group_fullname_${i}"]`)?.value.trim() || '',
-                        nricPassport: document.querySelector(`input[name="group_nric_${i}"]`)?.value.trim() || '',
                         email: document.querySelector(`input[name="group_email_${i}"]`)?.value.trim() || '',
                         mdcNo: document.querySelector(`input[name="group_mdc_${i}"]`)?.value.trim() || '',
                         foodPreference: document.querySelector(`select[name="group_food_${i}"]`)?.value || 'Non-vegetarian',
                     });
                 }
                 const incompleteDelegates = groupMembers
-                    .map((m, idx) => (!m.fullName || !m.nricPassport || !m.email) ? idx + 2 : null)
+                    .map((m, idx) => (!m.fullName || !m.email) ? idx + 2 : null)
                     .filter(n => n !== null);
                 if (incompleteDelegates.length) {
-                    alert(`Please fill in Full Name, NRIC/Passport and Email for Delegate #${incompleteDelegates.join(', #')} before submitting.`);
+                    alert(`Please fill in Full Name and Email for Delegate #${incompleteDelegates.join(', #')} before submitting.`);
                     return;
                 }
             }
