@@ -18,6 +18,10 @@ const config = {
   email:     process.env.EVENT_EMAIL   || 'maprostho@gmail.com',
   baseUrl:   process.env.FRONTEND_URL  || 'https://events.maprostho.com.my',
 
+  // ── Package types closed to new registrations ──────────────────
+  // Comma-separated list, e.g. CLOSED_PACKAGES=COMBO or CLOSED_PACKAGES=COMBO,LECTURE_ONLY
+  closedPackages: (process.env.CLOSED_PACKAGES ?? 'COMBO').split(',').map(s => s.trim()).filter(Boolean),
+
   // ── Pricing matrix (MYR) ──────────────────────────────────────
   // packageType -> tierKey -> { label, amount, pax, isGroup }
   pricing: {
@@ -57,6 +61,9 @@ const config = {
 
 /** Look up a pricing tier by packageType + membership + regMode. Throws if invalid. */
 function getTier(packageType, membership, regMode) {
+  if (config.closedPackages.includes(packageType)) {
+    throw new Error(`Registration for ${packageType} is closed`);
+  }
   const pkg = config.pricing[packageType];
   if (!pkg) throw new Error(`Invalid package type: ${packageType}`);
   const isGroup = regMode === 'GROUP';
