@@ -381,6 +381,7 @@
                 document.getElementById('bank-branch').textContent = EVENT.bank.branch;
                 document.getElementById('bank-swift').textContent = EVENT.bank.swiftCode;
                 renderPricingGrid();
+                applyClosedPackages();
 
                 const statsRes = await fetch('/api/participants/stats');
                 const stats = await statsRes.json();
@@ -394,12 +395,12 @@
             const grid = document.getElementById('pricing-grid');
             grid.innerHTML = '';
             Object.entries(EVENT.pricing).forEach(([pkgKey, tiers]) => {
-                const isCombo = pkgKey === 'COMBO';
+                const isClosed = (EVENT.closedPackages || []).includes(pkgKey);
                 grid.innerHTML += `
-                    <div class="glass-card p-4 rounded-xl border ${isCombo ? 'border-brand-500/30 bg-gradient-to-b from-brand-950/30 to-transparent' : 'border-slate-200'} hover:border-brand-500/40 transition-all">
+                    <div class="glass-card p-4 rounded-xl border border-slate-200 ${isClosed ? 'opacity-60' : ''} hover:border-brand-500/40 transition-all">
                         <div class="flex justify-between items-start mb-3">
                             <h3 class="text-sm font-bold text-slate-900">${pkgKey === 'LECTURE_ONLY' ? 'Lecture Only' : 'Combo: Lecture & Hands-On'}</h3>
-                            ${isCombo ? '<span class="px-2 py-0.5 rounded bg-brand-500/20 text-brand-300 text-[10px] font-semibold">Popular</span>' : ''}
+                            ${isClosed ? '<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[10px] font-semibold">Registration Closed</span>' : ''}
                         </div>
                         <div class="space-y-2 text-xs">
                             <div class="flex justify-between items-center py-1 border-b border-slate-200"><span class="text-slate-500">MAP Member (Single Pax)</span><span class="font-bold text-slate-900">RM ${tiers.MAP_SINGLE.amount}</span></div>
@@ -409,6 +410,22 @@
                         </div>
                     </div>`;
             });
+        }
+
+        function applyClosedPackages() {
+            const closed = EVENT.closedPackages || [];
+            const select = document.getElementById('reg-package');
+            Array.from(select.options).forEach(opt => {
+                if (closed.includes(opt.value)) {
+                    opt.disabled = true;
+                    if (!opt.textContent.includes('(Registration Closed)')) opt.textContent += ' (Registration Closed)';
+                }
+            });
+            if (closed.includes(select.value)) {
+                const open = Array.from(select.options).find(o => !closed.includes(o.value));
+                if (open) select.value = open.value;
+            }
+            calculateFee();
         }
 
         function currentTier() {

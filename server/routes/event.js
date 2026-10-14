@@ -17,6 +17,7 @@ router.get('/', async (req, res) => {
       capacity: ev.capacity,
       pricing:  ev.pricing,
       bank:     ev.bank,
+      closedPackages: ev.closedPackages,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

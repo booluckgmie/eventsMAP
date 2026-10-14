@@ -35,6 +35,7 @@ function validate(b) {
   const errors = [];
   if (!['SINGLE', 'GROUP'].includes(b.regMode))            errors.push('valid registration mode required');
   if (!['LECTURE_ONLY', 'COMBO'].includes(b.packageType))  errors.push('valid package type required');
+  else if (ev.closedPackages.includes(b.packageType))      errors.push(`Registration for ${b.packageType === 'COMBO' ? 'Combo: Lecture & Hands-On' : b.packageType} is closed`);
   if (!['MAP_MEMBER', 'NON_MEMBER'].includes(b.membership)) errors.push('valid membership category required');
   if (!['BILLPLZ', 'MANUAL_RECEIPT'].includes(b.paymentMethod)) errors.push('valid payment method required');
   if (!b.consentTnc || b.consentTnc === 'false')   errors.push('Terms & Conditions consent required');
