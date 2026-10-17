@@ -139,6 +139,19 @@
                 <span class="text-rose-500 font-semibold">permanently deletes the registration and all its attendees — cannot be undone.</span>
             </div>
         </div>
+
+        <!-- Site Usage (Vercel Web Analytics) -->
+        <div class="space-y-4">
+            <div>
+                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2"><i class="fa-solid fa-chart-column text-accent-500"></i> Site Usage</h2>
+                <p class="text-xs text-slate-500">Visitor traffic to the public event page, via Vercel Web Analytics. Aggregate only — no visitor-level data.</p>
+            </div>
+            <div id="analytics-panel">
+                <div class="glass-panel p-8 rounded-2xl border border-slate-200 text-center text-xs text-slate-400">
+                    <i class="fa-solid fa-circle-notch fa-spin mr-1.5"></i> Loading usage data…
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- Receipt Review Modal -->
@@ -181,6 +194,7 @@
             document.getElementById('dash-search').addEventListener('input', renderTable);
             document.getElementById('dash-filter-status').addEventListener('change', renderTable);
             document.getElementById('dash-filter-package').addEventListener('change', renderTable);
+            loadAnalytics();
         });
 
         function promptForKey() {
@@ -423,6 +437,112 @@
             a.download = `MMID2027_Delegates_${Date.now()}.csv`;
             a.click();
             showToast('CSV exported', 'success');
+        }
+
+        // ── Site Usage (Vercel Web Analytics) ──────────────────────────
+        const ANALYTICS_REASONS = {
+            no_token: 'Analytics access token is not configured.',
+            no_project: 'Analytics project ID is not configured.',
+            api_error: 'Could not reach the Vercel Analytics API.',
+        };
+
+        async function loadAnalytics() {
+            const panel = document.getElementById('analytics-panel');
+            try {
+                const res = await api('/api/analytics');
+                const data = await res.json();
+                if (!data.connected) return renderAnalyticsDisconnected(panel, data);
+                renderAnalyticsConnected(panel, data);
+            } catch (e) {
+                renderAnalyticsDisconnected(panel, { reason: 'api_error', detail: e.message });
+            }
+        }
+
+        function renderAnalyticsDisconnected(panel, data) {
+            const message = ANALYTICS_REASONS[data.reason] || 'Web Analytics is not connected yet.';
+            panel.innerHTML = `
+                <div class="glass-panel p-6 rounded-2xl border border-slate-200 space-y-4">
+                    <div class="flex items-start gap-3">
+                        <span class="w-9 h-9 rounded-lg bg-amber-500/15 text-amber-700 flex items-center justify-center text-sm shrink-0"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">${message}</p>
+                            ${data.detail ? `<p class="text-[11px] text-slate-400 font-mono mt-0.5">${data.detail}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="border-t border-slate-200 pt-4">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Setup steps</span>
+                        <ol class="text-[11px] text-slate-600 space-y-1.5 list-decimal list-inside font-sans">
+                            <li>Turn on Web Analytics in the Vercel dashboard → <strong>Analytics</strong> tab → <strong>Enable</strong>.</li>
+                            <li>Add a <code class="px-1 py-0.5 bg-slate-100 rounded text-[10px]">VERCEL_ANALYTICS_TOKEN</code> environment variable (a Vercel access token that can read this project).</li>
+                            <li>Redeploy the project.</li>
+                        </ol>
+                    </div>
+                </div>`;
+        }
+
+        function renderAnalyticsConnected(panel, data) {
+            const fmt = n => n.toLocaleString('en-US');
+            const maxViews = Math.max(1, ...data.daily.map(d => d.views));
+            const barWidth = 6, gap = 2;
+            const chartW = data.daily.length * (barWidth + gap);
+            const chartH = 60;
+            const bars = data.daily.map((d, i) => {
+                const h = Math.max(1, Math.round((d.views / maxViews) * (chartH - 4)));
+                return `<rect x="${i * (barWidth + gap)}" y="${chartH - h}" width="${barWidth}" height="${h}" rx="1.5" fill="#3b82f6" opacity="0.85"><title>${d.key}: ${d.views} views</title></rect>`;
+            }).join('');
+
+            const rankList = (rows, icon) => {
+                if (!rows || !rows.length) return '<p class="text-[11px] text-slate-400 py-2">No data yet.</p>';
+                const max = Math.max(1, ...rows.map(r => r.views));
+                return rows.slice(0, 6).map(r => `
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between text-[11px]">
+                            <span class="text-slate-600 font-sans truncate max-w-[70%]" title="${r.key}"><i class="fa-solid ${icon} text-slate-400 mr-1"></i>${r.key}</span>
+                            <span class="text-slate-900 font-semibold">${fmt(r.views)}</span>
+                        </div>
+                        <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-accent-500 rounded-full" style="width:${Math.max(4, Math.round((r.views / max) * 100))}%"></div></div>
+                    </div>`).join('');
+            };
+
+            panel.innerHTML = `
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div class="glass-card p-4 rounded-2xl border border-slate-200">
+                        <div class="flex items-center justify-between"><span class="text-xs font-semibold text-slate-500">Page Views</span><span class="w-8 h-8 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center text-xs"><i class="fa-solid fa-eye"></i></span></div>
+                        <div class="mt-2 text-2xl font-bold text-slate-900">${fmt(data.totals.views)}</div>
+                    </div>
+                    <div class="glass-card p-4 rounded-2xl border border-slate-200">
+                        <div class="flex items-center justify-between"><span class="text-xs font-semibold text-slate-500">Visitors</span><span class="w-8 h-8 rounded-lg bg-accent-500/20 text-accent-600 flex items-center justify-center text-xs"><i class="fa-solid fa-user-group"></i></span></div>
+                        <div class="mt-2 text-2xl font-bold text-slate-900">${fmt(data.totals.visitors)}</div>
+                    </div>
+                    <div class="glass-card p-4 rounded-2xl border border-slate-200 col-span-2 flex items-center justify-between">
+                        <div><span class="text-xs font-semibold text-slate-500 block">Date range</span><span class="text-xs text-slate-700 font-mono">${data.since} → ${data.until}</span></div>
+                        <span class="text-[10px] text-slate-400">${data.days}d</span>
+                    </div>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl border border-slate-200 mb-4">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Daily page views</span>
+                    ${data.daily.length
+                        ? `<svg viewBox="0 0 ${chartW} ${chartH}" preserveAspectRatio="none" class="w-full h-16">${bars}</svg>`
+                        : '<p class="text-[11px] text-slate-400 py-2">No data yet.</p>'}
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-panel p-4 rounded-2xl border border-slate-200 space-y-2.5">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Top pages</span>
+                        ${rankList(data.pages, 'fa-file')}
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border border-slate-200 space-y-2.5">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Countries</span>
+                        ${rankList(data.countries, 'fa-earth-asia')}
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border border-slate-200 space-y-2.5">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Devices</span>
+                        ${rankList(data.devices, 'fa-mobile-screen')}
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border border-slate-200 space-y-2.5">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Referrers</span>
+                        ${rankList(data.referrers, 'fa-link')}
+                    </div>
+                </div>`;
         }
 
         function showToast(message, type) {

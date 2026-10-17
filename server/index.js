@@ -55,6 +55,7 @@ app.use('/api/register',     require('./routes/registration'));
 app.use('/api/event',        require('./routes/event'));
 app.use('/api/participants', require('./routes/participants'));
 app.use('/api/billplz',      require('./routes/billplz'));
+app.use('/api/analytics',    require('./routes/analytics'));
 
 // ... rest of file unchanged ...
 
